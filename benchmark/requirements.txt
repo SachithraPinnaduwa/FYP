@@ -1,0 +1,29 @@
+# Benchmark requirements
+coverage>=7.0.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# For dataset loading
+datasets>=2.14.0
+huggingface_hub>=0.17.0
+
+# For your fine-tuned model
+# unsloth  # Install separately
+# torch    # Install separately
+# transformers>=4.40.0
+
+# For Gemini baseline
+google-generativeai>=0.3.0
+python-dotenv>=1.0.0
+
+# For Pynguin (optional, may require specific Python version)
+# pynguin>=0.35.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+tqdm>=4.65.0
+
+# Optional: visualization
+# matplotlib>=3.7.0
+# seaborn>=0.12.0

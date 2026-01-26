@@ -1,0 +1,166 @@
+# Repository-level .gitignore for the FYP project
+# Purpose: ignore Python artifacts, virtualenvs, Jupyter checkpoints,
+# model weights/checkpoints, build outputs, IDE files, and sensitive files.
+
+# --------------------
+# Python
+# --------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.pytest_cache/*
+.python-version
+.mypy_cache/
+.pyre/
+.cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.egg
+.eggs/
+
+# Virtual environments (including the repo-local bench env)
+venv/
+venv*/
+ENV/
+.env/
+.venv/
+benchmark/bench_env/
+bench_env/
+*/.venv/
+
+# --------------------
+# Jupyter / Notebooks
+# --------------------
+.ipynb_checkpoints
+*.nbconvert.ipynb
+.ipynb_checkpoints/
+
+# --------------------
+# Model artifacts & large binaries (do NOT commit weights)
+# --------------------
+# common weight formats
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.onnx
+*.h5
+
+# common training/checkpoint state
+optimizer.pt
+rng_state.pth
+scheduler.pt
+trainer_state.json
+checkpoint-*/
+checkpoints/
+**/checkpoint-*/
+
+# Ignore outputs/checkpoints but keep README files or important configs
+outputs/*
+!outputs/README.md
+results/*
+!results/README.md
+
+# Tokenizer/model caches (usually large/generated)
+**/__pycache__/
+**/cache/
+.huggingface/
+.cache/huggingface/
+hf_cache/
+
+# --------------------
+# Project-specific files (sensitive / generated)
+# --------------------
+# local env / secrets
+.env
+.env.*
+secrets.json
+credentials
+*.pem
+*.key
+
+# Generated model/adapters (often large) — allow configs but not weights
+**/adapter_model.safetensors
+**/adapter_model.pt
+**/adapter_model.bin
+
+# keep adapter config files tracked but ignore binary adapters
+# (if you want to keep adapter configs, do not add them here)
+
+# --------------------
+# IDEs, editors, OS
+# --------------------
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# --------------------
+# Logs, reports, profiling
+# --------------------
+*.log
+logs/
+debug.log
+coverage.xml
+htmlcov/
+.coverage
+.prof
+*.prof
+
+# --------------------
+# Tests / coverage / build artifacts
+# --------------------
+.coverage
+coverage/
+.tox/
+.nox/
+
+# --------------------
+# Node / frontend (if any build artifacts are created)
+# --------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+
+# --------------------
+# SQLite / DB files
+# --------------------
+*.db
+*.sqlite3
+*.sqlite
+
+# --------------------
+# Misc
+# --------------------
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+
+# --------------------
+# Git LFS suggestions (not enforced by .gitignore) 💡
+# Consider tracking large model files with Git LFS instead of committing them directly:
+#   git lfs install
+#   git lfs track "*.safetensors" "*.pt" "*.pth" "*.bin" "checkpoint-*/*"
+# Then commit the .gitattributes that git-lfs creates.
+
+# End of file
+
+unsloth_compiled_cache
+lora_model
+benchmark/bench_env
+outputs
+
