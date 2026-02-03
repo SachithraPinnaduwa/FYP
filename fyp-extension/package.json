@@ -1,0 +1,114 @@
+{
+  "name": "fyp-extension",
+  "displayName": "FYP Test Generator",
+  "description": "AI-Powered Unit Test Generator for Python using Adaptive Prompting",
+  "version": "0.0.1",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.108.1"
+  },
+  "categories": [
+    "Testing",
+    "Programming Languages",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "onLanguage:python"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "fyp-extension.selectFilesAndGenerateTests",
+        "title": "FYP: Select Python Files and Generate Tests",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "fyp-extension.generateTestsForActiveFile",
+        "title": "FYP: Generate Tests for Active File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fyp-extension.analyzeCode",
+        "title": "FYP: Analyze Code Structure",
+        "icon": "$(search)"
+      },
+      {
+        "command": "fyp-extension.configureBackend",
+        "title": "FYP: Configure Backend URL",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "fyp-extension.helloWorld",
+        "title": "FYP: Hello World"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceLangId == python",
+          "command": "fyp-extension.generateTestsForActiveFile",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == python",
+          "command": "fyp-extension.analyzeCode",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceLangId == python",
+          "command": "fyp-extension.generateTestsForActiveFile",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "FYP Test Generator",
+      "properties": {
+        "fypTestGenerator.backendUrl": {
+          "type": "string",
+          "default": "http://localhost:5000",
+          "description": "URL of the backend server for test generation"
+        },
+        "fypTestGenerator.useAdaptivePrompting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use AI-powered adaptive prompting for better test coverage"
+        },
+        "fypTestGenerator.maxTokens": {
+          "type": "number",
+          "default": 512,
+          "description": "Maximum tokens to generate per request"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "fyp-extension.generateTestsForActiveFile",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorLangId == python"
+      },
+      {
+        "command": "fyp-extension.selectFilesAndGenerateTests",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.108.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.2",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
