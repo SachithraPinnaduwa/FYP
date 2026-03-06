@@ -16,8 +16,8 @@ huggingface_hub>=0.17.0
 google-generativeai>=0.3.0
 python-dotenv>=1.0.0
 
-# For Pynguin (optional, may require specific Python version)
-# pynguin>=0.35.0
+# For Ollama
+requests>=2.28.0
 
 # Data processing
 pandas>=2.0.0
