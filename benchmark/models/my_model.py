@@ -4,6 +4,7 @@ Uses the LoRA adapter trained in working_model.ipynb.
 Reads model path from LORA_MODEL_PATH env variable.
 """
 
+import gc
 import os
 import sys
 import torch
@@ -49,18 +50,49 @@ class YourModelTestGenerator:
         self.device = device
         self.model = None
         self.tokenizer = None
+        self._load_failed = False          # cache failure so we don't retry 11×
+        self._load_error: Optional[str] = None
         
     def load_model(self):
-        print("Loading model from:", self.model_path)
-        from unsloth import FastLanguageModel
-        self.model, self.tokenizer = FastLanguageModel.from_pretrained(
-            model_name=os.path.abspath(self.model_path),
-            max_seq_length=self.max_seq_length,
-            dtype=None,
-            load_in_4bit=self.load_in_4bit,
-        )
-        FastLanguageModel.for_inference(self.model)
-        print(f"Model loaded from {self.model_path}")
+        """Load model once. If a previous attempt failed, raise immediately."""
+        if self._load_failed:
+            raise RuntimeError(
+                f"Model loading already failed previously: {self._load_error}\n"
+                "Fix the issue and restart the benchmark."
+            )
+
+        # Free any stale GPU memory before attempting to load
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        free_vram, total_vram = torch.cuda.mem_get_info()
+        print(f"Loading model from: {self.model_path}")
+        print(f"  GPU VRAM: {free_vram / 1024**3:.1f} GB free / {total_vram / 1024**3:.1f} GB total")
+
+        try:
+            from unsloth import FastLanguageModel
+            self.model, self.tokenizer = FastLanguageModel.from_pretrained(
+                model_name=os.path.abspath(self.model_path),
+                max_seq_length=self.max_seq_length,
+                dtype=None,
+                load_in_4bit=self.load_in_4bit,
+            )
+            FastLanguageModel.for_inference(self.model)
+            used = torch.cuda.memory_allocated() / 1024**3
+            print(f"  Model loaded successfully ({used:.1f} GB VRAM used)")
+        except Exception as exc:
+            self._load_failed = True
+            self._load_error = str(exc)
+            # Try to free whatever was partially allocated
+            self.model = None
+            self.tokenizer = None
+            gc.collect()
+            torch.cuda.empty_cache()
+            raise RuntimeError(
+                f"Failed to load model: {exc}\n"
+                "Hint: Make sure no other process (backend server, notebook, etc.) "
+                "is using the GPU. Run 'nvidia-smi' to check."
+            ) from exc
         
     def generate_tests(
         self,
