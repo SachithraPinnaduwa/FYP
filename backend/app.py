@@ -1,4 +1,6 @@
+import ast
 import os
+import re
 import sys
 import threading
 from flask import Flask, request, jsonify
@@ -15,6 +17,121 @@ from backend import AdaptivePrompter, CodeAnalyzer
 
 app = Flask(__name__)
 CORS(app)
+
+
+# =============================================================================
+# Input Validation Helpers
+# =============================================================================
+
+def _looks_like_prose(line: str) -> bool:
+    """
+    Heuristic: return True when a line looks like natural-language prose
+    rather than Python source code.
+    """
+    stripped = line.strip()
+
+    # Common Python line starters – treat as code immediately
+    python_starters = (
+        'def ', 'class ', 'import ', 'from ', 'return ', 'if ', 'else:',
+        'elif ', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ',
+        'pass', 'raise ', 'yield ', 'assert ', 'lambda ', 'async ', 'await ',
+        'print(', '@', 'self.', 'cls.', '#', '"""', "'''", '"', "'",
+    )
+    for starter in python_starters:
+        if stripped.startswith(starter):
+            return False
+
+    # Lines containing operators / brackets are almost certainly code
+    if re.search(r'[=\(\)\[\]\{\}:,\+\-\*\/\%\&\|\^<>!]', stripped):
+        return False
+
+    # 3+ consecutive purely-alphabetic words → likely prose
+    words = stripped.split()
+    if len(words) >= 3:
+        alpha_words = sum(1 for w in words if re.match(r'^[a-zA-Z]+$', w))
+        if alpha_words / len(words) > 0.7:
+            return True
+
+    return False
+
+
+def validate_code_input(code: str):
+    """
+    Validate that *code* is non-empty, syntactically valid Python, and
+    contains actual code rather than plain text.
+
+    Returns:
+        (True, "")               – input is acceptable
+        (False, error_message)   – input is rejected; message explains why
+    """
+    # 1. Empty / blank input
+    if not code or not code.strip():
+        return False, "Input code is empty. Please provide Python code to test."
+
+    # 2. Syntax check
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as exc:
+        line_num = exc.lineno or 0
+        lines = code.split('\n')
+        offending = lines[line_num - 1].strip() if 0 < line_num <= len(lines) else ""
+        if offending and _looks_like_prose(offending):
+            return False, (
+                f"The input appears to contain non-Python text on line {line_num}: "
+                f'"{offending[:80]}". Please provide valid Python code only.'
+            )
+        return False, (
+            f"Syntax error on line {line_num}: {exc.msg}. "
+            "Please fix the code and try again."
+        )
+
+    # 3. Scan for prose-like lines that somehow parsed (e.g. bare identifiers)
+    prose_lines = []
+    for i, line in enumerate(code.split('\n'), 1):
+        stripped = line.strip()
+        if stripped and not stripped.startswith('#') and _looks_like_prose(stripped):
+            prose_lines.append((i, stripped))
+
+    if prose_lines:
+        examples = '; '.join(
+            f'line {ln}: "{txt[:60]}"' for ln, txt in prose_lines[:3]
+        )
+        return False, (
+            "The input contains non-Python text. "
+            f"Detected prose-like content at: {examples}. "
+            "Please remove any free-form text and provide Python code only."
+        )
+
+    # 4. Ensure there is at least one meaningful Python construct
+    has_functions = any(
+        isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) for n in ast.walk(tree)
+    )
+    has_classes = any(isinstance(n, ast.ClassDef) for n in ast.walk(tree))
+    has_imports = any(
+        isinstance(n, (ast.Import, ast.ImportFrom)) for n in ast.walk(tree)
+    )
+    has_assignments = any(
+        isinstance(n, (ast.Assign, ast.AugAssign, ast.AnnAssign))
+        for n in ast.iter_child_nodes(tree)
+    )
+
+    if not (has_functions or has_classes or has_imports or has_assignments):
+        # All top-level statements are bare string/constant expressions → plain text
+        body = list(ast.iter_child_nodes(tree))
+        if body and all(
+            isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant)
+            for n in body
+        ):
+            return False, (
+                "The input contains only plain text strings, not Python code. "
+                "Please provide actual Python functions, classes, or statements to test."
+            )
+        return False, (
+            "No testable Python constructs (functions, classes, imports, or assignments) "
+            "were found. Please provide Python code that can be unit-tested."
+        )
+
+    return True, ""
 
 # Config via environment variables
 MODEL_NAME = os.environ.get("MODEL_NAME", "lora_model")
@@ -62,8 +179,9 @@ def generate_tests():
     description = data.get("description", "")
     max_new_tokens = int(data.get("max_new_tokens", 512))
 
-    if not code:
-        return jsonify({"error": "Missing 'code' field in JSON body."}), 400
+    valid, err = validate_code_input(code)
+    if not valid:
+        return jsonify({"error": err}), 400
 
     # Ensure model is loaded
     try:
@@ -150,10 +268,11 @@ def analyze_code():
     """
     data = request.get_json(force=True)
     code = data.get("code")
-    
-    if not code:
-        return jsonify({"error": "Missing 'code' field in JSON body."}), 400
-    
+
+    valid, err = validate_code_input(code)
+    if not valid:
+        return jsonify({"error": err}), 400
+
     try:
         analyzer = CodeAnalyzer()
         structure = analyzer.analyze(code)
@@ -189,10 +308,11 @@ def generate_intentions():
     data = request.get_json(force=True)
     code = data.get("code")
     description = data.get("description", "")
-    
-    if not code:
-        return jsonify({"error": "Missing 'code' field in JSON body."}), 400
-    
+
+    valid, err = validate_code_input(code)
+    if not valid:
+        return jsonify({"error": err}), 400
+
     try:
         prompter = get_adaptive_prompter()
         result = prompter.get_intentions_only(code, description)
@@ -232,10 +352,11 @@ def generate_tests_adaptive():
     description = data.get("description", "")
     max_new_tokens = int(data.get("max_new_tokens", 512))
     include_debug = data.get("include_debug", False)
-    
-    if not code:
-        return jsonify({"error": "Missing 'code' field in JSON body."}), 400
-    
+
+    valid, err = validate_code_input(code)
+    if not valid:
+        return jsonify({"error": err}), 400
+
     # Ensure model is loaded
     try:
         load_model()
@@ -321,14 +442,15 @@ def generate_prompt_only():
     data = request.get_json(force=True)
     code = data.get("code")
     description = data.get("description", "")
-    
-    if not code:
-        return jsonify({"error": "Missing 'code' field in JSON body."}), 400
-    
+
+    valid, err = validate_code_input(code)
+    if not valid:
+        return jsonify({"error": err}), 400
+
     try:
         prompter = get_adaptive_prompter()
         result = prompter.create_adaptive_prompt(code, description)
-        
+
         return jsonify({
             "prompt": result.final_prompt,
             "structure_summary": result.structure_summary,
