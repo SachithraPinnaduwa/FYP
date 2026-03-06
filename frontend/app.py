@@ -662,7 +662,7 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                             use_container_width=True
                         )
         else:
-            st.error("❌ Failed to generate tests for any code units. Please check the backend logs.")
+            st.error("❌ Failed to generate tests for any code units.")
 
 
 # =============================================================================
