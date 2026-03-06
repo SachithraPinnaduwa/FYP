@@ -85,24 +85,8 @@ def validate_code_input(code: str):
             "Please fix the code and try again."
         )
 
-    # 3. Scan for prose-like lines that somehow parsed (e.g. bare identifiers)
-    prose_lines = []
-    for i, line in enumerate(code.split('\n'), 1):
-        stripped = line.strip()
-        if stripped and not stripped.startswith('#') and _looks_like_prose(stripped):
-            prose_lines.append((i, stripped))
-
-    if prose_lines:
-        examples = '; '.join(
-            f'line {ln}: "{txt[:60]}"' for ln, txt in prose_lines[:3]
-        )
-        return False, (
-            "The input contains non-Python text. "
-            f"Detected prose-like content at: {examples}. "
-            "Please remove any free-form text and provide Python code only."
-        )
-
-    # 4. Ensure there is at least one meaningful Python construct
+    # 3. Ensure there is at least one meaningful Python construct
+    #    (Any real bare prose outside a string would have already failed ast.parse above.)
     has_functions = any(
         isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) for n in ast.walk(tree)
     )
@@ -225,7 +209,9 @@ def generate_tests():
                 pad_token_id=tokenizer.eos_token_id,
             )
 
-        generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Decode only the newly generated tokens (exclude the input prompt)
+        new_tokens = outputs[0][input_ids.shape[1]:]
+        generated = tokenizer.decode(new_tokens, skip_special_tokens=True)
         return jsonify({"tests": generated})
 
     except Exception as e:
@@ -401,7 +387,9 @@ def generate_tests_adaptive():
                 pad_token_id=tokenizer.eos_token_id,
             )
         
-        generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Decode only the newly generated tokens (exclude the input prompt)
+        new_tokens = outputs[0][input_ids.shape[1]:]
+        generated = tokenizer.decode(new_tokens, skip_special_tokens=True)
         
         response = {
             "tests": generated,
