@@ -16,7 +16,7 @@ export BACKEND_URL="http://<backend-host>:<port>/generate-tests"
 
 3. Start the frontend:
 ```bash
-streamlit run frontend/app.py
+streamlit run frontend/frontend.py
 ```
 
 The UI lets you paste code and a problem description, then calls `/generate-tests` and displays (and lets you download) the generated tests.

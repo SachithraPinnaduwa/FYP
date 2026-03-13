@@ -117,13 +117,11 @@ htmlcov/
 *.prof
 
 # --------------------
-# Tests / coverage / build artifacts
+# Benchmarks
 # --------------------
-.coverage
-coverage/
-.tox/
-.nox/
-
+benchmark/bench_env/
+benchmark/results/
+benchmark/generated_tests/
 # --------------------
 # Node / frontend (if any build artifacts are created)
 # --------------------
