@@ -20,7 +20,7 @@ class GeminiTestGenerator:
     
     def __init__(
         self,
-        model: str = "gemini-2.5-flash",
+        model: str = None,
         api_key: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048
@@ -29,12 +29,12 @@ class GeminiTestGenerator:
         Initialize the Gemini test generator.
         
         Args:
-            model: The Gemini model to use (gemini-1.5-pro, gemini-1.5-flash, etc.)
+            model: The Gemini model to use (default from env GEMINI_MODEL_NAME or gemini-2.0-flash)
             api_key: Google API key (uses GEMINI_API_KEY env var if not provided)
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
         """
-        self.model = model
+        self.model = model or os.environ.get("GEMINI_MODEL_NAME", "gemini-2.0-flash")
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
         self.temperature = temperature
         self.max_tokens = max_tokens

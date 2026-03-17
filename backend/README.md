@@ -83,7 +83,7 @@ Returns test intentions using static analysis (no AI required).
 
 ## Local Run
 ```bash
-python backend/app.py
+python backend/backend.py
 ```
 
 ## Install Requirements
