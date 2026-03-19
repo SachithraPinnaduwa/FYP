@@ -118,37 +118,35 @@ def validate_code_input(code: str):
     return True, ""
 
 # Config via environment variables
-MODEL_NAME = os.environ.get("MODEL_NAME", "lora_model")
+MODEL_NAME = os.environ.get("MODEL_NAME", "../gguf_model/unsloth.q4_k_m.gguf")
 MAX_SEQ_LENGTH = int(os.environ.get("MAX_SEQ_LENGTH", "2048"))
-LOAD_IN_4BIT = os.environ.get("LOAD_IN_4BIT", "True").lower() in ("1", "true", "yes")
 DEVICE = os.environ.get("DEVICE", "cuda")
 
-# Lazy-loaded model/tokenizer
+# Lazy-loaded model
 _model_lock = threading.Lock()
 model = None
-tokenizer = None
-
 
 def load_model():
-    global model, tokenizer
+    global model
     with _model_lock:
-        if model is None or tokenizer is None:
+        if model is None:
             try:
-                from unsloth import FastLanguageModel
-            except Exception as e:
-                raise RuntimeError("Failed to import unsloth. Ensure it's installed.") from e
+                from llama_cpp import Llama
+            except ImportError as e:
+                raise RuntimeError("Failed to import llama_cpp. Ensure llama-cpp-python is installed.") from e
 
-            model, tokenizer = FastLanguageModel.from_pretrained(
-                model_name=MODEL_NAME,
-                max_seq_length=MAX_SEQ_LENGTH,
-                dtype=None,
-                load_in_4bit=LOAD_IN_4BIT,
+            # Load the GGUF model using llama.cpp
+            model_path = MODEL_NAME
+            if not os.path.exists(model_path):
+                # fallback for testing
+                model_path = os.path.join(os.path.dirname(__file__), "..", "gguf_model", "unsloth.q4_k_m.gguf")
+                
+            model = Llama(
+                model_path=model_path,
+                n_ctx=MAX_SEQ_LENGTH,
+                n_gpu_layers=-1 if DEVICE == "cuda" else 0,
+                verbose=False
             )
-            # Move to inference mode helper if available
-            try:
-                FastLanguageModel.for_inference(model)
-            except Exception:
-                pass
 
 
 @app.route("/health", methods=["GET"])
@@ -177,41 +175,26 @@ def generate_tests():
 
     messages = [
         {
+            "role": "system",
+            "content": "You are a helpful coding assistant that writes Python unit tests."
+        },
+        {
             "role": "user",
             "content": (
-                "Write a comprehensive Python unit test suite for the provided code.\n\n"
+                "Write a comprehensive Python unit test suite for this code.\n\n"
                 f"{complex_input}"
             ),
         }
     ]
 
     try:
-        input_ids = tokenizer.apply_chat_template(
-            messages,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
+        response = model.create_chat_completion(
+            messages=messages,
+            max_tokens=max_new_tokens,
+            temperature=0.2, # Optional, use for testing
         )
-
-        # Move tensors to device if possible
-        import torch
-        device = torch.device("cuda" if DEVICE == "cuda" and torch.cuda.is_available() else "cpu")
-        input_ids = input_ids.to(device)
-
-        attention_mask = input_ids.ne(tokenizer.pad_token_id).long()
-
-        with torch.no_grad():
-            outputs = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                max_new_tokens=max_new_tokens,
-                eos_token_id=tokenizer.eos_token_id,
-                pad_token_id=tokenizer.eos_token_id,
-            )
-
-        # Decode only the newly generated tokens (exclude the input prompt)
-        new_tokens = outputs[0][input_ids.shape[1]:]
-        generated = tokenizer.decode(new_tokens, skip_special_tokens=True)
+        
+        generated = response["choices"][0]["message"]["content"]
         return jsonify({"tests": generated})
 
     except Exception as e:
@@ -359,48 +342,34 @@ def generate_tests_adaptive():
     # Step 4: Generate tests with fine-tuned model
     messages = [
         {
+            "role": "system",
+            "content": "You are a helpful coding assistant that writes Python unit tests."
+        },
+        {
             "role": "user",
             "content": prompt_result.final_prompt,
         }
     ]
     
     try:
-        input_ids = tokenizer.apply_chat_template(
-            messages,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
+        response = model.create_chat_completion(
+            messages=messages,
+            max_tokens=max_new_tokens,
+            temperature=0.2, # Optional, use for testing
         )
         
-        import torch
-        device = torch.device("cuda" if DEVICE == "cuda" and torch.cuda.is_available() else "cpu")
-        input_ids = input_ids.to(device)
+        generated = response["choices"][0]["message"]["content"]
         
-        attention_mask = input_ids.ne(tokenizer.pad_token_id).long()
-        
-        with torch.no_grad():
-            outputs = model.generate(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                max_new_tokens=max_new_tokens,
-                eos_token_id=tokenizer.eos_token_id,
-                pad_token_id=tokenizer.eos_token_id,
-            )
-        
-        # Decode only the newly generated tokens (exclude the input prompt)
-        new_tokens = outputs[0][input_ids.shape[1]:]
-        generated = tokenizer.decode(new_tokens, skip_special_tokens=True)
-        
-        response = {
+        response_data = {
             "tests": generated,
             "structure_summary": prompt_result.structure_summary,
             "intentions": prompt_result.intentions.to_dict(),
         }
         
         if include_debug:
-            response["prompt_used"] = prompt_result.final_prompt
+            response_data["prompt_used"] = prompt_result.final_prompt
         
-        return jsonify(response)
+        return jsonify(response_data)
         
     except Exception as e:
         return jsonify({"error": f"Generation failed: {e}"}), 500

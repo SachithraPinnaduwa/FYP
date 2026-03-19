@@ -672,6 +672,6 @@ st.divider()
 st.markdown("""
 <div style="text-align: center; color: gray; font-size: 0.8em;">
     <p>Powered by Fine-Tuned LLM + Adaptive Prompting</p>
-    <p>Structure Analysis: Python AST | Test Planning: Gemini/Ollama | Test Generation: LoRA Model</p>
+    <p>Structure Analysis: Python AST | Test Planning: Gemini/Ollama | Test Generation: GGUF Model</p>
 </div>
 """, unsafe_allow_html=True)

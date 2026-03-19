@@ -76,7 +76,7 @@ Returns code structure without running any model.
 Returns test intentions using static analysis (no AI required).
 
 ## Environment Variables
-- `MODEL_NAME` — model folder or hub name (default: `lora_model`)
+- `MODEL_NAME` — path to the GGUF model (default: `../gguf_model/unsloth.q4_k_m.gguf`)
 - `MAX_SEQ_LENGTH` — tokenizer/model max seq length (default: `2048`)
 - `LOAD_IN_4BIT` — `True`/`False` to load adapters in 4-bit (default: `True`)
 - `DEVICE` — `cuda` or `cpu` (default: `cuda`)
