@@ -1,0 +1,63 @@
+# Defined the prompt format for Unit Testing
+alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+### Instruction:
+{}
+
+### Input:
+{}
+
+### Response:
+{}"""
+
+EOS_TOKEN = tokenizer.eos_token
+
+def formatting_prompts_func(examples):
+    # The dataset uses these column names:
+    # 'question': The problem description
+    # 'code_ground_truth': The target code solution
+    # 'unit_tests': A list of dicts, where each dict has a 'code' key with the actual test
+    
+    questions = examples["question"]
+    codes     = examples["code_ground_truth"]
+    unit_tests_lists = examples["unit_tests"]
+    
+    texts = []
+    # Zip through the batch
+    for question, code, tests_list in zip(questions, codes, unit_tests_lists):
+        
+        # Extract the actual python code for the tests from the list of dictionaries
+        # We join multiple tests with newlines to create one full test suite
+        if tests_list:
+            # Handle cases where tests might be None or empty
+            try:
+                # The dataset structure has a 'code' key inside the unit_tests list items
+                full_test_suite = "\n\n".join([t['code'] for t in tests_list if t.get('code')])
+            except:
+                full_test_suite = ""
+        else:
+            full_test_suite = ""
+            
+        # We combine the Question and the Code into the Input field
+        # This gives the model context on WHAT the code is supposed to do
+        complex_input = f"Problem Description:\n{question}\n\nCode to Test:\n{code}"
+        
+        instruction = "Write a comprehensive Python unit test suite for the provided code."
+        
+        text = alpaca_prompt.format(instruction, complex_input, full_test_suite) + EOS_TOKEN
+        texts.append(text)
+        
+    return { "text" : texts, }
+
+from datasets import load_dataset
+
+# Load both the train and test splits of the dataset
+train_dataset = load_dataset("KAKA22/CodeRM-UnitTest", split="train")
+test_dataset = load_dataset("KAKA22/CodeRM-UnitTest", split="test")
+
+#Shuffle and take a smaller subset of the test dataset for faster evaluation
+test_dataset = test_dataset.shuffle(seed=42).select(range(5000))
+
+# Apply the formatting function to both datasets
+train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
+test_dataset = test_dataset.map(formatting_prompts_func, batched=True)
