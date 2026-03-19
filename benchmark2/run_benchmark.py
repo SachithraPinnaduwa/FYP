@@ -12,7 +12,6 @@ if str(current_dir) not in sys.path:
     sys.path.append(str(current_dir))
 
 from evaluation.dataset_eval import DatasetBenchmarkEvaluator
-from models.base_model import BaseModelGenerator
 
 def main():
     parser = argparse.ArgumentParser(description="Run Benchmark on KAKA22/CodeRM-UnitTest (Test Split)")
@@ -23,19 +22,26 @@ def main():
     print("\nSelect the model you want to benchmark:")
     print("1) Base Model (Qwen2.5-Coder-7B-Instruct-bnb-4bit via Unsloth)")
     print("2) Finetuned Model (GGUF localized)")
+    print("3) Qwen3.5-4B Base Model (unsloth/Qwen3.5-4B via Unsloth)")
     
-    choice = input("\nEnter choice (1 or 2): ").strip()
+    choice = input("\nEnter choice (1, 2, or 3): ").strip()
     
     if choice == "1":
         model_name = "base_model"
+        from models.base_model import BaseModelGenerator
         generator_class_name = "BaseModelGenerator"
     elif choice == "2":
         model_name = "finetuned_model"
         from models.gguf_model import GGUFModelGenerator
         generator_class_name = "GGUFModelGenerator"
+    elif choice == "3":
+        model_name = "qwen3.5_base"
+        from models.qwen35_base_model import Qwen35BaseModelGenerator
+        generator_class_name = "Qwen35BaseModelGenerator"
     else:
         print("Invalid choice, defaulting to Base Model.")
         model_name = "base_model"
+        from models.base_model import BaseModelGenerator
         generator_class_name = "BaseModelGenerator"
 
     # Directories mapping inside benchmark2
@@ -61,6 +67,8 @@ def main():
                 generator = BaseModelGenerator()
             elif model_name == "finetuned_model":
                 generator = GGUFModelGenerator()
+            elif model_name == "qwen3.5_base":
+                generator = Qwen35BaseModelGenerator()
             
             for i, sample in enumerate(tqdm(dataset, desc="Generating Tests")):
                 # Ensure a stable ID for both subject and test
