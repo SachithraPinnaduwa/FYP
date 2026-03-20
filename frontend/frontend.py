@@ -449,9 +449,10 @@ with col1:
         )
     
     description = st.text_area(
-        "Problem description (optional)",
+        "Test requirements (Include line by line for each requirement)",
         height=80,
-        placeholder="Describe what the code does or any specific testing requirements..."
+        placeholder="Enter test requirements line by line...",
+        help="Examples of test requirements:\n- The test cases should include positive and negative tests\n- Mock the database calls\n- Verify API error responses\n- Ensure invalid arguments throw ValueError"
     )
 
 with col2:

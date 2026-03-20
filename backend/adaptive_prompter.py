@@ -67,15 +67,7 @@ class AdaptivePrompter:
 {code}
 ```
 
-{problem_section}
-
-## Requirements
-1. Use the unittest framework (import unittest)
-2. Follow the test intentions above as your guide
-3. Include setup/teardown if needed
-4. Test all identified edge cases and error conditions
-5. Use descriptive test method names that reflect the intention
-6. Include assertions that verify expected behavior
+{requirements_section}
 
 Generate complete, runnable Python test code:"""
 
@@ -92,7 +84,7 @@ Generate complete, runnable Python test code:"""
 {code}
 ```
 
-{problem_section}
+{requirements_section}
 
 Generate complete unittest code:"""
 
@@ -144,15 +136,32 @@ Generate complete unittest code:"""
         # Step 3: Construct Final Prompt
         template = self.PROMPT_TEMPLATE if use_detailed_template else self.SIMPLE_PROMPT_TEMPLATE
         
-        problem_section = ""
-        if problem_description:
-            problem_section = f"## Problem Description\n{problem_description}"
+        user_requirements = problem_description.strip()
+        if user_requirements:
+            requirements_section = (
+                "## Test Requirements\n"
+                "1. Use the unittest framework (import unittest)\n"
+                "2. Generate complete, runnable Python test code\n"
+                "3. User specified requirements:\n"
+                f"{user_requirements}"
+            )
+        else:
+            requirements_section = (
+                "## Requirements\n"
+                "1. Use the unittest framework (import unittest)\n"
+                "2. Follow the test intentions above as your guide\n"
+                "3. Include setup/teardown if needed\n"
+                "4. Test all identified edge cases and error conditions\n"
+                "5. Use descriptive test method names that reflect the intention\n"
+                "6. Include assertions that verify expected behavior\n"
+                "7. Generate complete, runnable Python test code"
+            )
         
         final_prompt = template.format(
             structure_summary=structure_summary,
             intentions=intentions.to_prompt_format(),
             code=code,
-            problem_section=problem_section,
+            requirements_section=requirements_section,
         )
         
         return AdaptivePromptResult(
@@ -271,9 +280,9 @@ class AdaptivePromptBuilder:
         return self
     
     def add_description(self, description: str) -> 'AdaptivePromptBuilder':
-        """Add problem description."""
+        """Add test requirements (formerly problem description)."""
         if description:
-            self.sections.append(f"## Problem Description\n{description}")
+            self.sections.append(f"## User Test Requirements\n{description}")
         return self
     
     def add_custom_section(self, title: str, content: str) -> 'AdaptivePromptBuilder':
@@ -291,9 +300,12 @@ class AdaptivePromptBuilder:
                 "Write comprehensive unit tests for the provided code."
             )
         
+        # Check if we added custom problem description (which are now requirements)
+        has_user_requirements = any("Test Requirements" in section for section in self.sections)
+        
         prompt_parts.extend(self.sections)
         
-        if include_instructions:
+        if include_instructions and not has_user_requirements:
             prompt_parts.append(
                 "\n## Requirements\n"
                 "1. Use the unittest framework\n"
@@ -301,7 +313,14 @@ class AdaptivePromptBuilder:
                 "3. Test all identified edge cases and error conditions\n"
                 "4. Generate complete, runnable test code"
             )
-        
+        elif include_instructions:
+            # We add base requirements if user requirements are present
+            prompt_parts.append(
+                "\n## Additional Requirements\n"
+                "1. Use the unittest framework\n"
+                "2. Generate complete, runnable test code"
+            )
+            
         return '\n\n'.join(prompt_parts)
 
 

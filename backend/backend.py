@@ -185,7 +185,7 @@ def generate_tests():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    complex_input = f"Problem Description:\n{description}\n\nCode to Test:\n{code}"
+    complex_input = f"Test Requirements:\n{description}\n\nCode to Test:\n{code}"
 
     messages = [
         {
