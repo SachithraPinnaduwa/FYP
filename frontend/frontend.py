@@ -464,7 +464,7 @@ with col2:
     max_new_tokens = st.slider(
         "Max tokens per chunk",
         min_value=256,
-        max_value=1024,
+        max_value=2048,
         value=512,
         step=64,
         help="Maximum tokens to generate per function/class"
