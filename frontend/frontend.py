@@ -603,6 +603,12 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                             cat = intent.get("category", "").upper()
                             desc = intent.get("description", "")
                             st.markdown(f"  - [{cat}] {desc}")
+                        
+                        prompt_used = item.get("prompt_used", None)
+                        if prompt_used:
+                            st.markdown("**Prompt Sent to Model:**")
+                            st.code(prompt_used, language="markdown")
+                            
                         st.markdown("---")
             
             # Show results in tabs if multiple units

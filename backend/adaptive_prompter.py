@@ -96,26 +96,9 @@ Generate complete, runnable Python test code:"""
 
 Generate complete unittest code:"""
 
-    def __init__(
-        self,
-        intention_model: str = "static",
-        gemini_api_key: Optional[str] = None,
-        use_mock_intentions: bool = False,
-        provider: Optional[str] = None,
-        ollama_host: Optional[str] = None,
-    ):
+    def __init__(self):
         """
         Initialize the adaptive prompter.
-        
-        Args:
-            intention_model: Ignored (kept for backward compatibility)
-            gemini_api_key: Ignored (kept for backward compatibility)
-            use_mock_intentions: Ignored (kept for backward compatibility)
-            provider: Ignored (kept for backward compatibility)
-            ollama_host: Ignored (kept for backward compatibility)
-            
-        Note: All AI-related parameters are kept for backward compatibility
-              but are ignored. The prompter now uses only static analysis.
         """
         self.code_analyzer = CodeAnalyzer()
         self.intention_generator = StaticIntentionGenerator()
@@ -326,7 +309,6 @@ class AdaptivePromptBuilder:
 def create_adaptive_prompt(
     code: str,
     problem_description: str = "",
-    use_mock: bool = False,
 ) -> str:
     """
     Quick function to create an adaptive prompt.
@@ -334,12 +316,11 @@ def create_adaptive_prompt(
     Args:
         code: Python source code
         problem_description: Optional description
-        use_mock: Use mock intention generator
         
     Returns:
         The constructed prompt string
     """
-    prompter = AdaptivePrompter(use_mock_intentions=use_mock)
+    prompter = AdaptivePrompter()
     result = prompter.create_adaptive_prompt(code, problem_description)
     return result.final_prompt
 
@@ -372,8 +353,8 @@ class Calculator:
         return result
 '''
     
-    # Create adaptive prompt (using mock for demo)
-    prompter = AdaptivePrompter(use_mock_intentions=True)
+    # Create adaptive prompt
+    prompter = AdaptivePrompter()
     result = prompter.create_adaptive_prompt(
         code=sample_code,
         problem_description="A calculator with basic arithmetic operations",
