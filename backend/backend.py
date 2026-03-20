@@ -3,9 +3,20 @@ import os
 import re
 import sys
 import threading
+import time
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+
+# Configure logging to go to a file
+logging.basicConfig(
+    filename='backend_generation.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -160,6 +171,7 @@ def generate_tests():
     code = data.get("code")
     description = data.get("description", "")
     max_new_tokens = int(data.get("max_new_tokens", 512))
+    log_generation = data.get("log_generation", False)
 
     valid, err = validate_code_input(code)
     if not valid:
@@ -187,12 +199,20 @@ def generate_tests():
         }
     ]
 
+    if log_generation:
+        start_time = time.time()
+        logger.info("Starting test generation (basic). Input code and description omitted for privacy.")
+
     try:
         response = model.create_chat_completion(
             messages=messages,
             max_tokens=max_new_tokens,
             temperature=0.2, # Optional, use for testing
         )
+        
+        if log_generation:
+            generation_time = time.time() - start_time
+            logger.info(f"Test generation (basic) completed in {generation_time:.2f} seconds. Generated code omitted for privacy.")
         
         generated = response["choices"][0]["message"]["content"]
         return jsonify({"tests": generated})
@@ -321,6 +341,7 @@ def generate_tests_adaptive():
     description = data.get("description", "")
     max_new_tokens = int(data.get("max_new_tokens", 512))
     include_debug = data.get("include_debug", False)
+    log_generation = data.get("log_generation", False)
 
     valid, err = validate_code_input(code)
     if not valid:
@@ -351,12 +372,20 @@ def generate_tests_adaptive():
         }
     ]
     
+    if log_generation:
+        start_time = time.time()
+        logger.info("Starting test generation (adaptive). Input code, description, and intentions omitted for privacy.")
+
     try:
         response = model.create_chat_completion(
             messages=messages,
             max_tokens=max_new_tokens,
             temperature=0.2, # Optional, use for testing
         )
+        
+        if log_generation:
+            generation_time = time.time() - start_time
+            logger.info(f"Test generation (adaptive) completed in {generation_time:.2f} seconds. Generated code omitted for privacy.")
         
         generated = response["choices"][0]["message"]["content"]
         

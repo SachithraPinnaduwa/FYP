@@ -302,7 +302,7 @@ def split_code_into_chunks(source_code: str) -> List[tuple]:
 
 def generate_tests_for_unit(code: str, description: str, use_adaptive: bool, 
                             max_tokens: int, include_debug: bool,
-                            max_retries: int = 2) -> Dict[str, Any]:
+                            max_retries: int = 2, log_generation: bool = False) -> Dict[str, Any]:
     """
     Generate tests for a single code unit with retry logic.
     """
@@ -317,6 +317,7 @@ def generate_tests_for_unit(code: str, description: str, use_adaptive: bool,
                     "description": description,
                     "max_new_tokens": max_tokens,
                     "include_debug": include_debug,
+                    "log_generation": log_generation
                 }
             else:
                 url = GENERATE_TESTS_URL
@@ -324,6 +325,7 @@ def generate_tests_for_unit(code: str, description: str, use_adaptive: bool,
                     "code": code,
                     "description": description,
                     "max_new_tokens": max_tokens,
+                    "log_generation": log_generation
                 }
             
             resp = requests.post(url, json=payload, timeout=180)
@@ -452,6 +454,12 @@ with col2:
         value=True,
         help="Automatically retry if test generation fails or returns invalid code"
     )
+
+    log_generation = st.checkbox(
+        "Enable logging",
+        value=False,
+        help="Enable optional logging to log the generation time (info like user code is omitted)"
+    )
     
     max_new_tokens = st.slider(
         "Max tokens per chunk",
@@ -556,7 +564,8 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                 use_adaptive=use_adaptive,
                 max_tokens=max_new_tokens,
                 include_debug=include_debug,
-                max_retries=max_retries
+                max_retries=max_retries,
+                log_generation=log_generation
             )
             
             if result.get('error'):
