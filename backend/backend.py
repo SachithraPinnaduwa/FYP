@@ -132,6 +132,8 @@ def validate_code_input(code: str):
 MODEL_NAME = os.environ.get("MODEL_NAME", "../gguf_model/unsloth.q4_k_m.gguf")
 MAX_SEQ_LENGTH = int(os.environ.get("MAX_SEQ_LENGTH", "2048"))
 DEVICE = os.environ.get("DEVICE", "cuda")
+# -1 loads all layers to GPU. Specific numbers (e.g. 20) offload the rest to RAM.
+N_GPU_LAYERS = int(os.environ.get("N_GPU_LAYERS", "-1"))
 
 # Lazy-loaded model
 _model_lock = threading.Lock()
@@ -155,7 +157,7 @@ def load_model():
             model = Llama(
                 model_path=model_path,
                 n_ctx=MAX_SEQ_LENGTH,
-                n_gpu_layers=-1 if DEVICE == "cuda" else 0,
+                n_gpu_layers=N_GPU_LAYERS if DEVICE == "cuda" else 0,
                 verbose=False
             )
 

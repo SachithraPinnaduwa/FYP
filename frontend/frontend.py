@@ -415,13 +415,16 @@ with col1:
     
     if input_method == "Upload .py file":
         uploaded_file = st.file_uploader(
-            "Upload a Python file",
+            "Upload a Python file (Max 256KB)",
             type=["py"],
-            help="Upload a .py file to generate tests for"
+            help="Upload a .py file to generate tests for (up to 256KB)"
         )
         if uploaded_file is not None:
-            code = uploaded_file.read().decode("utf-8")
-            st.code(code, language="python", line_numbers=True)
+            if uploaded_file.size >  256 * 1024:
+                st.error("File size exceeds the 256KB limit. Please upload a smaller file.")
+            else:
+                code = uploaded_file.read().decode("utf-8")
+                st.code(code, language="python", line_numbers=True)
     else:
         code = st.text_area(
             "Code to test",
