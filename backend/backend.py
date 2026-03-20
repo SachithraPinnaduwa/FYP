@@ -188,12 +188,15 @@ def generate_tests():
     messages = [
         {
             "role": "system",
-            "content": "You are a helpful coding assistant that writes Python unit tests."
+            "content": "You are a helpful coding assistant that writes Python unit tests. Output ONLY valid Python test code. Do NOT output any explanations or conversational text. Start your response directly with the import statements."
         },
         {
             "role": "user",
             "content": (
-                "Write a comprehensive Python unit test suite for this code.\n\n"
+                "Write a comprehensive Python unit test suite for this code.\n"
+                "Requirements:\n"
+                "1. Use the unittest framework (import unittest)\n"
+                "2. Generate ONLY Python code\n\n"
                 f"{complex_input}"
             ),
         }

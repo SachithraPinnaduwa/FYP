@@ -28,34 +28,30 @@ def extract_test_code(response_text: str) -> str:
     
     text = response_text.strip()
     
-    # Try to find Python code blocks first
-    code_block_patterns = [
-        r'```python\s*(.*?)\s*```',
-        r'```\s*(.*?)\s*```',
-        r'~~~python\s*(.*?)\s*~~~',
-        r'~~~\s*(.*?)\s*~~~',
-    ]
-    
-    for pattern in code_block_patterns:
-        matches = re.findall(pattern, text, re.DOTALL)
-        if matches:
-            # Find the match that contains unittest
-            for match in matches:
-                if 'unittest' in match or 'TestCase' in match or 'def test_' in match:
-                    return match.strip()
-            # If no unittest match, return the longest match
-            return max(matches, key=len).strip()
-    
+    # Try to find Python code blocks first (including unclosed ones)
+    block_starts = ['```python', '```', '~~~python', '~~~']
+    for start in block_starts:
+        if start in text:
+            # Get everything after the start marker
+            after_start = text.split(start, 1)[1]
+            end_marker = start[:3]
+            # If there's an end marker, cut it off; else take the whole rest (cut off by max_tokens)
+            if end_marker in after_start:
+                return after_start.split(end_marker, 1)[0].strip()
+            return after_start.strip()
+            
     # Look for unittest code without code blocks
     lines = text.split('\n')
     code_lines = []
     in_code = False
     
     for line in lines:
-        # Start capturing when we see import unittest or class Test
-        if 'import unittest' in line or (line.strip().startswith('class ') and 'Test' in line):
+        # Start capturing when we see import unittest or class Test or def test_
+        if any(marker in line for marker in ['import unittest', 'import pytest', 'class Test']):
             in_code = True
-        
+        elif line.strip().startswith('def test_'):
+            in_code = True
+            
         if in_code:
             # Stop if we hit explanation text
             if line.strip().startswith('#') and len(line.strip()) > 100:
@@ -66,11 +62,11 @@ def extract_test_code(response_text: str) -> str:
     
     if code_lines:
         result = '\n'.join(code_lines).strip()
-        if 'unittest' in result or 'TestCase' in result:
+        if 'test' in result.lower():
             return result
     
     # Final fallback: return text if it looks like valid test code
-    if 'import unittest' in text or 'class Test' in text:
+    if 'import unittest' in text or 'class Test' in text or 'def test_' in text:
         return text
     
     return ""
@@ -78,7 +74,7 @@ def extract_test_code(response_text: str) -> str:
 
 def is_valid_test_code(code: str) -> bool:
     """
-    Check if the extracted code is valid test code (not original source).
+    Check if the extracted code is valid format and syntactically correct Python.
     """
     if not code:
         return False
@@ -95,6 +91,7 @@ def is_valid_test_code(code: str) -> bool:
         'self.assertEqual' in code_lower,
         'self.assertTrue' in code_lower,
         'self.assertRaises' in code_lower,
+        'pytest' in code_lower
     ])
     
     if not has_test_indicators:
@@ -104,7 +101,30 @@ def is_valid_test_code(code: str) -> bool:
     test_method_count = len(re.findall(r'def test_\w+', code))
     
     # Should have at least one test method
-    return test_method_count >= 1
+    if test_method_count < 1:
+        return False
+        
+    # Strictly validate against Python syntax errors
+    import ast
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        # If the code was abruptly cut off by token limit, the last line might be incomplete.
+        # Try trimming the last line and re-parsing up to 3 times
+        lines = code.split('\n')
+        for _ in range(3):
+            if not lines:
+                break
+            lines.pop()
+            trimmed_code = '\n'.join(lines)
+            try:
+                ast.parse(trimmed_code)
+                return True
+            except SyntaxError:
+                continue
+                
+        return False
 
 
 def extract_imports(code: str) -> Set[str]:
