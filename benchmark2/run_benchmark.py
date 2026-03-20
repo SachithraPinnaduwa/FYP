@@ -23,8 +23,9 @@ def main():
     print("1) Base Model (Qwen2.5-Coder-7B-Instruct-bnb-4bit via Unsloth)")
     print("2) Finetuned Model (GGUF localized)")
     print("3) Qwen3.5-4B Base Model (unsloth/Qwen3.5-4B via Unsloth)")
+    print("4) Gemma-3-4B-IT Base Model (unsloth/gemma-3-4b-it via Unsloth)")
     
-    choice = input("\nEnter choice (1, 2, or 3): ").strip()
+    choice = input("\nEnter choice (1, 2, 3, or 4): ").strip()
     
     if choice == "1":
         model_name = "base_model"
@@ -38,6 +39,10 @@ def main():
         model_name = "qwen3.5_base"
         from models.qwen35_base_model import Qwen35BaseModelGenerator
         generator_class_name = "Qwen35BaseModelGenerator"
+    elif choice == "4":
+        model_name = "gemma4b_base"
+        from models.gemma4b_base_model import Gemma4BBaseModelGenerator
+        generator_class_name = "Gemma4BBaseModelGenerator"
     else:
         print("Invalid choice, defaulting to Base Model.")
         model_name = "base_model"
@@ -69,6 +74,8 @@ def main():
                 generator = GGUFModelGenerator()
             elif model_name == "qwen3.5_base":
                 generator = Qwen35BaseModelGenerator()
+            elif model_name == "gemma4b_base":
+                generator = Gemma4BBaseModelGenerator()
             
             for i, sample in enumerate(tqdm(dataset, desc="Generating Tests")):
                 # Ensure a stable ID for both subject and test
