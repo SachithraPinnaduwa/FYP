@@ -25,10 +25,9 @@ def main():
     print("3) Qwen3.5-4B Base Model (unsloth/Qwen3.5-4B via Unsloth)")
     print("4) Gemma-3-4B-IT Base Model (unsloth/gemma-3-4b-it via Unsloth)")
     print("5) Starcoder2-7B Model (bigcode/starcoder2-7b with bitsandbytes)")
-    print("6) CodeGen2-7B Model (Salesforce/codegen2-7B)")
-    print("7) Pynguin Generator (Automated Unit Test Generation)")
+    print("6) Pynguin Generator (Automated Unit Test Generation)")
     
-    choice = input("\nEnter choice (1, 2, 3, 4, 5, 6, or 7): ").strip()
+    choice = input("\nEnter choice (1, 2, 3, 4, 5, or 6): ").strip()
     
     if choice == "1":
         model_name = "base_model"
@@ -51,10 +50,6 @@ def main():
         from models.starcoder2_7b_model import Starcoder2_7bModelGenerator
         generator_class_name = "Starcoder2_7bModelGenerator"
     elif choice == "6":
-        model_name = "codegen2_7b"
-        from models.codegen2_7b_model import Codegen2_7bModelGenerator
-        generator_class_name = "Codegen2_7bModelGenerator"
-    elif choice == "7":
         model_name = "pynguin"
         from models.pynguin_generator import PynguinGenerator
         generator_class_name = "PynguinGenerator"
@@ -93,8 +88,6 @@ def main():
                 generator = Qwen35BaseModelGenerator()
             elif model_name == "gemma4b_base":
                 generator = Gemma4BBaseModelGenerator()
-            elif model_name == "codegen2_7b":
-                generator = Codegen2_7bModelGenerator()
             elif model_name == "pynguin":
                 generator = PynguinGenerator()
             
