@@ -424,7 +424,21 @@ with col1:
                 st.error("File size exceeds the 256KB limit. Please upload a smaller file.")
             else:
                 code = uploaded_file.read().decode("utf-8")
-                st.code(code, language="python", line_numbers=True)
+                
+                if "code_expanded" not in st.session_state:
+                    st.session_state.code_expanded = False
+                
+                if st.session_state.code_expanded:
+                    if st.button("Collapse Code", key="collapse_file_btn"):
+                        st.session_state.code_expanded = False
+                        st.rerun()
+                    st.code(code, language="python", line_numbers=True)
+                else:
+                    if st.button("Expand Code", key="expand_file_btn"):
+                        st.session_state.code_expanded = True
+                        st.rerun()
+                    with st.container(height=300):
+                        st.code(code, language="python", line_numbers=True)
     else:
         code = st.text_area(
             "Code to test",
