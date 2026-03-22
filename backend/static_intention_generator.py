@@ -41,6 +41,16 @@ class TestIntention:
             "target_function": self.target_function,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TestIntention':
+        return cls(
+            category=data.get("category", "normal_case"),
+            description=data.get("description", ""),
+            priority=data.get("priority", "medium"),
+            inputs=data.get("inputs"),
+            expected_behavior=data.get("expected_behavior"),
+            target_function=data.get("target_function")
+        )
 
 @dataclass
 class IntentionPlan:
@@ -57,6 +67,15 @@ class IntentionPlan:
             "mock_suggestions": self.mock_suggestions,
             "boundary_values": self.boundary_values,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'IntentionPlan':
+        plan = cls()
+        plan.intentions = [TestIntention.from_dict(i) for i in data.get("intentions", [])]
+        plan.coverage_goals = data.get("coverage_goals", [])
+        plan.mock_suggestions = data.get("mock_suggestions", [])
+        plan.boundary_values = data.get("boundary_values", [])
+        return plan
     
     def to_prompt_format(self) -> str:
         """Convert to a format suitable for the test generation prompt."""

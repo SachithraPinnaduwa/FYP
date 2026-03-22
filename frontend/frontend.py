@@ -322,7 +322,8 @@ def split_code_into_chunks(source_code: str) -> List[tuple]:
 
 def generate_tests_for_unit(code: str, description: str, use_adaptive: bool, 
                             max_tokens: int, include_debug: bool,
-                            max_retries: int = 2, log_generation: bool = False) -> Dict[str, Any]:
+                            max_retries: int = 2, log_generation: bool = False,
+                            intentions: Optional[Dict] = None) -> Dict[str, Any]:
     """
     Generate tests for a single code unit with retry logic.
     """
@@ -339,6 +340,8 @@ def generate_tests_for_unit(code: str, description: str, use_adaptive: bool,
                     "include_debug": include_debug,
                     "log_generation": log_generation
                 }
+                if intentions:
+                    payload["intentions"] = intentions
             else:
                 url = GENERATE_TESTS_URL
                 payload = {
@@ -559,6 +562,9 @@ if use_adaptive and show_analysis and code.strip():
                 if resp.status_code == 200:
                     data = resp.json()
                     st.text(data.get("prompt_format", "No intentions generated"))
+                    # Cache the generated intentions so we can pass them to the test generator later
+                    if "intentions" in data:
+                        st.session_state["cached_intentions"] = data["intentions"]
                 else:
                     st.warning(f"Intention generation failed: {resp.json().get('error', 'Unknown error')}")
             except Exception as e:
@@ -595,6 +601,9 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
             # Build description with context
             chunk_desc = f"{description}\n\nThis is a {chunk_type} named '{name}'." if description else f"This is a {chunk_type} named '{name}'."
             
+            # Only pass cached intentions if we aren't splitting into multiple chunks
+            passed_intentions = st.session_state.get("cached_intentions") if len(chunks) == 1 else None
+            
             # Generate tests with retry logic
             result = generate_tests_for_unit(
                 code=chunk_code,
@@ -603,7 +612,8 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                 max_tokens=max_new_tokens,
                 include_debug=include_debug,
                 max_retries=max_retries,
-                log_generation=log_generation
+                log_generation=log_generation,
+                intentions=passed_intentions
             )
             
             if result.get('error'):

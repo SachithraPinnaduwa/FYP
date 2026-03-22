@@ -88,18 +88,25 @@ Generate complete, runnable Python test code:"""
 
 Generate complete unittest code:"""
 
-    def __init__(self):
+    def __init__(self, llm_intention_fn=None):
         """
         Initialize the adaptive prompter.
+        If llm_intention_fn is provided, it uses LLM to generate test intentions.
         """
         self.code_analyzer = CodeAnalyzer()
-        self.intention_generator = StaticIntentionGenerator()
+        
+        if llm_intention_fn:
+            from .llm_intention_generator import LLMIntentionGenerator
+            self.intention_generator = LLMIntentionGenerator(llm_intention_fn)
+        else:
+            self.intention_generator = StaticIntentionGenerator()
     
     def create_adaptive_prompt(
         self,
         code: str,
         problem_description: str = "",
         use_detailed_template: bool = True,
+        provided_intentions: Optional[IntentionPlan] = None,
     ) -> AdaptivePromptResult:
         """
         Create an optimized prompt using the full adaptive pipeline.
@@ -113,6 +120,7 @@ Generate complete unittest code:"""
             code: The Python source code to generate tests for
             problem_description: Optional description of what the code does
             use_detailed_template: Use detailed vs simple template
+            provided_intentions: Pre-generated intentions to use
             
         Returns:
             AdaptivePromptResult with all components and final prompt
@@ -126,12 +134,15 @@ Generate complete unittest code:"""
             structure = ModuleInfo()
             structure_summary = f"[Parse Error: {e}. Treating as opaque code block.]"
         
-        # Step 2: Generate Test Intentions (using static analysis)
-        intentions = self.intention_generator.generate_intentions(
-            code=code,
-            structure_summary=structure_summary,
-            problem_description=problem_description,
-        )
+        # Step 2: Generate Test Intentions
+        if provided_intentions:
+            intentions = provided_intentions
+        else:
+            intentions = self.intention_generator.generate_intentions(
+                code=code,
+                structure_summary=structure_summary,
+                problem_description=problem_description,
+            )
         
         # Step 3: Construct Final Prompt
         template = self.PROMPT_TEMPLATE if use_detailed_template else self.SIMPLE_PROMPT_TEMPLATE

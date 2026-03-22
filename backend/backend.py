@@ -236,11 +236,21 @@ _adaptive_lock = threading.Lock()
 
 
 def get_adaptive_prompter():
-    """Get or create the AdaptivePrompter instance (uses static analysis only)."""
+    """Get or create the AdaptivePrompter instance (configured to use the LLM model)."""
     global _adaptive_prompter
     with _adaptive_lock:
         if _adaptive_prompter is None:
-            _adaptive_prompter = AdaptivePrompter()
+            def llm_intention_fn(messages):
+                load_model()
+                response = model.create_chat_completion(
+                    messages=messages,
+                    # Optional generation config tuning
+                    max_tokens=6144, # Test coverage + intents can be long
+                    temperature=0.4,
+                )
+                return response["choices"][0]["message"]["content"]
+
+            _adaptive_prompter = AdaptivePrompter(llm_intention_fn=llm_intention_fn)
     return _adaptive_prompter
 
 
@@ -347,6 +357,7 @@ def generate_tests_adaptive():
     max_new_tokens = int(data.get("max_new_tokens", 512))
     include_debug = data.get("include_debug", False)
     log_generation = data.get("log_generation", False)
+    provided_intentions_data = data.get("intentions")
 
     valid, err = validate_code_input(code)
     if not valid:
@@ -358,10 +369,23 @@ def generate_tests_adaptive():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+    # Check if frontend provided intentions
+    provided_intentions = None
+    if provided_intentions_data:
+        from backend.static_intention_generator import IntentionPlan
+        try:
+            provided_intentions = IntentionPlan.from_dict(provided_intentions_data)
+        except Exception as e:
+            logger.warning(f"Could not parse provided intentions: {e}")
+
     # Step 1-3: Create adaptive prompt
     try:
         prompter = get_adaptive_prompter()
-        prompt_result = prompter.create_adaptive_prompt(code, description)
+        prompt_result = prompter.create_adaptive_prompt(
+            code=code, 
+            problem_description=description,
+            provided_intentions=provided_intentions
+        )
     except Exception as e:
         return jsonify({"error": f"Prompt construction failed: {e}"}), 500
     
