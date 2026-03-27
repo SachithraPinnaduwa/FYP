@@ -22,48 +22,9 @@
         "command": "fyp-extension.selectFilesAndGenerateTests",
         "title": "FYP: Select Python Files and Generate Tests",
         "icon": "$(beaker)"
-      },
-      {
-        "command": "fyp-extension.generateTestsForActiveFile",
-        "title": "FYP: Generate Tests for Active File",
-        "icon": "$(play)"
-      },
-      {
-        "command": "fyp-extension.analyzeCode",
-        "title": "FYP: Analyze Code Structure",
-        "icon": "$(search)"
-      },
-      {
-        "command": "fyp-extension.configureBackend",
-        "title": "FYP: Configure Backend URL",
-        "icon": "$(gear)"
-      },
-      {
-        "command": "fyp-extension.helloWorld",
-        "title": "FYP: Hello World"
       }
     ],
-    "menus": {
-      "editor/context": [
-        {
-          "when": "resourceLangId == python",
-          "command": "fyp-extension.generateTestsForActiveFile",
-          "group": "navigation"
-        },
-        {
-          "when": "resourceLangId == python",
-          "command": "fyp-extension.analyzeCode",
-          "group": "navigation"
-        }
-      ],
-      "explorer/context": [
-        {
-          "when": "resourceLangId == python",
-          "command": "fyp-extension.generateTestsForActiveFile",
-          "group": "navigation"
-        }
-      ]
-    },
+    "menus": {},
     "configuration": {
       "title": "FYP Test Generator",
       "properties": {
@@ -85,12 +46,6 @@
       }
     },
     "keybindings": [
-      {
-        "command": "fyp-extension.generateTestsForActiveFile",
-        "key": "ctrl+shift+t",
-        "mac": "cmd+shift+t",
-        "when": "editorLangId == python"
-      },
       {
         "command": "fyp-extension.selectFilesAndGenerateTests",
         "key": "ctrl+alt+t",
