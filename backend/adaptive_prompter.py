@@ -69,7 +69,7 @@ class AdaptivePrompter:
 
 {requirements_section}
 
-Generate complete, runnable Python test code:"""
+Generate ONLY the unittest code. Do not repeat the original code:"""
 
     SIMPLE_PROMPT_TEMPLATE = """Write a comprehensive Python unit test suite for the provided code.
 
@@ -86,7 +86,7 @@ Generate complete, runnable Python test code:"""
 
 {requirements_section}
 
-Generate complete unittest code:"""
+Generate ONLY the unittest code. Do not repeat the original code:"""
 
     def __init__(self, llm_intention_fn=None):
         """
@@ -152,7 +152,7 @@ Generate complete unittest code:"""
             requirements_section = (
                 "## Test Requirements\n"
                 "1. Use the unittest framework (import unittest)\n"
-                "2. Generate complete, runnable Python test code\n"
+                "2. Generate only the unittest code. Do not repeat the original code:\n"
                 "3. User specified requirements:\n"
                 f"{user_requirements}"
             )
@@ -165,7 +165,7 @@ Generate complete unittest code:"""
                 "4. Test all identified edge cases and error conditions\n"
                 "5. Use descriptive test method names that reflect the intention\n"
                 "6. Include assertions that verify expected behavior\n"
-                "7. Generate complete, runnable Python test code"
+                "7. Only output the test class and functions."
             )
         
         final_prompt = template.format(
