@@ -28,34 +28,30 @@ def extract_test_code(response_text: str) -> str:
     
     text = response_text.strip()
     
-    # Try to find Python code blocks first
-    code_block_patterns = [
-        r'```python\s*(.*?)\s*```',
-        r'```\s*(.*?)\s*```',
-        r'~~~python\s*(.*?)\s*~~~',
-        r'~~~\s*(.*?)\s*~~~',
-    ]
-    
-    for pattern in code_block_patterns:
-        matches = re.findall(pattern, text, re.DOTALL)
-        if matches:
-            # Find the match that contains unittest
-            for match in matches:
-                if 'unittest' in match or 'TestCase' in match or 'def test_' in match:
-                    return match.strip()
-            # If no unittest match, return the longest match
-            return max(matches, key=len).strip()
-    
+    # Try to find Python code blocks first (including unclosed ones)
+    block_starts = ['```python', '```', '~~~python', '~~~']
+    for start in block_starts:
+        if start in text:
+            # Get everything after the start marker
+            after_start = text.split(start, 1)[1]
+            end_marker = start[:3]
+            # If there's an end marker, cut it off; else take the whole rest (cut off by max_tokens)
+            if end_marker in after_start:
+                return after_start.split(end_marker, 1)[0].strip()
+            return after_start.strip()
+            
     # Look for unittest code without code blocks
     lines = text.split('\n')
     code_lines = []
     in_code = False
     
     for line in lines:
-        # Start capturing when we see import unittest or class Test
-        if 'import unittest' in line or (line.strip().startswith('class ') and 'Test' in line):
+        # Start capturing when we see import unittest or class Test or def test_
+        if any(marker in line for marker in ['import unittest', 'import pytest', 'class Test']):
             in_code = True
-        
+        elif line.strip().startswith('def test_'):
+            in_code = True
+            
         if in_code:
             # Stop if we hit explanation text
             if line.strip().startswith('#') and len(line.strip()) > 100:
@@ -66,11 +62,11 @@ def extract_test_code(response_text: str) -> str:
     
     if code_lines:
         result = '\n'.join(code_lines).strip()
-        if 'unittest' in result or 'TestCase' in result:
+        if 'test' in result.lower():
             return result
     
     # Final fallback: return text if it looks like valid test code
-    if 'import unittest' in text or 'class Test' in text:
+    if 'import unittest' in text or 'class Test' in text or 'def test_' in text:
         return text
     
     return ""
@@ -78,7 +74,7 @@ def extract_test_code(response_text: str) -> str:
 
 def is_valid_test_code(code: str) -> bool:
     """
-    Check if the extracted code is valid test code (not original source).
+    Check if the extracted code is valid format and syntactically correct Python.
     """
     if not code:
         return False
@@ -95,6 +91,7 @@ def is_valid_test_code(code: str) -> bool:
         'self.assertEqual' in code_lower,
         'self.assertTrue' in code_lower,
         'self.assertRaises' in code_lower,
+        'pytest' in code_lower
     ])
     
     if not has_test_indicators:
@@ -104,7 +101,30 @@ def is_valid_test_code(code: str) -> bool:
     test_method_count = len(re.findall(r'def test_\w+', code))
     
     # Should have at least one test method
-    return test_method_count >= 1
+    if test_method_count < 1:
+        return False
+        
+    # Strictly validate against Python syntax errors
+    import ast
+    try:
+        ast.parse(code)
+        return True
+    except SyntaxError:
+        # If the code was abruptly cut off by token limit, the last line might be incomplete.
+        # Try trimming the last line and re-parsing up to 3 times
+        lines = code.split('\n')
+        for _ in range(3):
+            if not lines:
+                break
+            lines.pop()
+            trimmed_code = '\n'.join(lines)
+            try:
+                ast.parse(trimmed_code)
+                return True
+            except SyntaxError:
+                continue
+                
+        return False
 
 
 def extract_imports(code: str) -> Set[str]:
@@ -302,7 +322,7 @@ def split_code_into_chunks(source_code: str) -> List[tuple]:
 
 def generate_tests_for_unit(code: str, description: str, use_adaptive: bool, 
                             max_tokens: int, include_debug: bool,
-                            max_retries: int = 2) -> Dict[str, Any]:
+                            max_retries: int = 2, log_generation: bool = False) -> Dict[str, Any]:
     """
     Generate tests for a single code unit with retry logic.
     """
@@ -317,6 +337,7 @@ def generate_tests_for_unit(code: str, description: str, use_adaptive: bool,
                     "description": description,
                     "max_new_tokens": max_tokens,
                     "include_debug": include_debug,
+                    "log_generation": log_generation
                 }
             else:
                 url = GENERATE_TESTS_URL
@@ -324,6 +345,7 @@ def generate_tests_for_unit(code: str, description: str, use_adaptive: bool,
                     "code": code,
                     "description": description,
                     "max_new_tokens": max_tokens,
+                    "log_generation": log_generation
                 }
             
             resp = requests.post(url, json=payload, timeout=180)
@@ -393,13 +415,30 @@ with col1:
     
     if input_method == "Upload .py file":
         uploaded_file = st.file_uploader(
-            "Upload a Python file",
+            "Upload a Python file (Max 256KB)",
             type=["py"],
-            help="Upload a .py file to generate tests for"
+            help="Upload a .py file to generate tests for (up to 256KB)"
         )
         if uploaded_file is not None:
-            code = uploaded_file.read().decode("utf-8")
-            st.code(code, language="python", line_numbers=True)
+            if uploaded_file.size >  256 * 1024:
+                st.error("File size exceeds the 256KB limit. Please upload a smaller file.")
+            else:
+                code = uploaded_file.read().decode("utf-8")
+                
+                if "code_expanded" not in st.session_state:
+                    st.session_state.code_expanded = False
+                
+                if st.session_state.code_expanded:
+                    if st.button("Collapse Code", key="collapse_file_btn"):
+                        st.session_state.code_expanded = False
+                        st.rerun()
+                    st.code(code, language="python", line_numbers=True)
+                else:
+                    if st.button("Expand Code", key="expand_file_btn"):
+                        st.session_state.code_expanded = True
+                        st.rerun()
+                    with st.container(height=300):
+                        st.code(code, language="python", line_numbers=True)
     else:
         code = st.text_area(
             "Code to test",
@@ -424,9 +463,10 @@ with col1:
         )
     
     description = st.text_area(
-        "Problem description (optional)",
+        "Test requirements (Include line by line for each requirement)",
         height=80,
-        placeholder="Describe what the code does or any specific testing requirements..."
+        placeholder="Enter test requirements line by line...",
+        help="Examples of test requirements:\n- The test cases should include positive and negative tests\n- Mock the database calls\n- Verify API error responses\n- Ensure invalid arguments throw ValueError"
     )
 
 with col2:
@@ -452,11 +492,17 @@ with col2:
         value=True,
         help="Automatically retry if test generation fails or returns invalid code"
     )
+
+    log_generation = st.checkbox(
+        "Enable logging",
+        value=False,
+        help="Enable optional logging to log the generation time (info like user code is omitted)"
+    )
     
     max_new_tokens = st.slider(
         "Max tokens per chunk",
         min_value=256,
-        max_value=1024,
+        max_value=2048,
         value=512,
         step=64,
         help="Maximum tokens to generate per function/class"
@@ -504,19 +550,7 @@ if use_adaptive and show_analysis and code.strip():
         
         with col_intent:
             st.markdown("**Test Intentions** (via LLM)")
-            try:
-                resp = requests.post(
-                    GENERATE_INTENTIONS_URL,
-                    json={"code": code, "description": description},
-                    timeout=60
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    st.text(data.get("prompt_format", "No intentions generated"))
-                else:
-                    st.warning(f"Intention generation failed: {resp.json().get('error', 'Unknown error')}")
-            except Exception as e:
-                st.warning(f"Could not generate intentions: {e}")
+            st.info("💡 Intentions will be dynamically generated by the LLM when you press **Generate Tests**.")
 
 # =============================================================================
 # Generate Button
@@ -556,7 +590,8 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                 use_adaptive=use_adaptive,
                 max_tokens=max_new_tokens,
                 include_debug=include_debug,
-                max_retries=max_retries
+                max_retries=max_retries,
+                log_generation=log_generation
             )
             
             if result.get('error'):
@@ -594,6 +629,12 @@ if st.button("🚀 Generate Tests", type="primary", use_container_width=True):
                             cat = intent.get("category", "").upper()
                             desc = intent.get("description", "")
                             st.markdown(f"  - [{cat}] {desc}")
+                        
+                        prompt_used = item.get("prompt_used", None)
+                        if prompt_used:
+                            st.markdown("**Prompt Sent to Model:**")
+                            st.code(prompt_used, language="markdown")
+                            
                         st.markdown("---")
             
             # Show results in tabs if multiple units
@@ -672,6 +713,6 @@ st.divider()
 st.markdown("""
 <div style="text-align: center; color: gray; font-size: 0.8em;">
     <p>Powered by Fine-Tuned LLM + Adaptive Prompting</p>
-    <p>Structure Analysis: Python AST | Test Planning: Gemini/Ollama | Test Generation: LoRA Model</p>
+    <p>Structure Analysis: Python AST | Test Planning: Gemini/Ollama | Test Generation: GGUF Model</p>
 </div>
 """, unsafe_allow_html=True)

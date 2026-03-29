@@ -161,4 +161,4 @@ unsloth_compiled_cache
 lora_model
 benchmark/bench_env
 outputs
-
+gguf_model

@@ -67,17 +67,9 @@ class AdaptivePrompter:
 {code}
 ```
 
-{problem_section}
+{requirements_section}
 
-## Requirements
-1. Use the unittest framework (import unittest)
-2. Follow the test intentions above as your guide
-3. Include setup/teardown if needed
-4. Test all identified edge cases and error conditions
-5. Use descriptive test method names that reflect the intention
-6. Include assertions that verify expected behavior
-
-Generate complete, runnable Python test code:"""
+Generate ONLY the unittest code. Do not repeat the original code:"""
 
     SIMPLE_PROMPT_TEMPLATE = """Write a comprehensive Python unit test suite for the provided code.
 
@@ -92,39 +84,29 @@ Generate complete, runnable Python test code:"""
 {code}
 ```
 
-{problem_section}
+{requirements_section}
 
-Generate complete unittest code:"""
+Generate ONLY the unittest code. Do not repeat the original code:"""
 
-    def __init__(
-        self,
-        intention_model: str = "static",
-        gemini_api_key: Optional[str] = None,
-        use_mock_intentions: bool = False,
-        provider: Optional[str] = None,
-        ollama_host: Optional[str] = None,
-    ):
+    def __init__(self, llm_intention_fn=None):
         """
         Initialize the adaptive prompter.
-        
-        Args:
-            intention_model: Ignored (kept for backward compatibility)
-            gemini_api_key: Ignored (kept for backward compatibility)
-            use_mock_intentions: Ignored (kept for backward compatibility)
-            provider: Ignored (kept for backward compatibility)
-            ollama_host: Ignored (kept for backward compatibility)
-            
-        Note: All AI-related parameters are kept for backward compatibility
-              but are ignored. The prompter now uses only static analysis.
+        If llm_intention_fn is provided, it uses LLM to generate test intentions.
         """
         self.code_analyzer = CodeAnalyzer()
-        self.intention_generator = StaticIntentionGenerator()
+        
+        if llm_intention_fn:
+            from .llm_intention_generator import LLMIntentionGenerator
+            self.intention_generator = LLMIntentionGenerator(llm_intention_fn)
+        else:
+            self.intention_generator = StaticIntentionGenerator()
     
     def create_adaptive_prompt(
         self,
         code: str,
         problem_description: str = "",
         use_detailed_template: bool = True,
+        provided_intentions: Optional[IntentionPlan] = None,
     ) -> AdaptivePromptResult:
         """
         Create an optimized prompt using the full adaptive pipeline.
@@ -138,6 +120,7 @@ Generate complete unittest code:"""
             code: The Python source code to generate tests for
             problem_description: Optional description of what the code does
             use_detailed_template: Use detailed vs simple template
+            provided_intentions: Pre-generated intentions to use
             
         Returns:
             AdaptivePromptResult with all components and final prompt
@@ -151,25 +134,45 @@ Generate complete unittest code:"""
             structure = ModuleInfo()
             structure_summary = f"[Parse Error: {e}. Treating as opaque code block.]"
         
-        # Step 2: Generate Test Intentions (using static analysis)
-        intentions = self.intention_generator.generate_intentions(
-            code=code,
-            structure_summary=structure_summary,
-            problem_description=problem_description,
-        )
+        # Step 2: Generate Test Intentions
+        if provided_intentions:
+            intentions = provided_intentions
+        else:
+            intentions = self.intention_generator.generate_intentions(
+                code=code,
+                structure_summary=structure_summary,
+                problem_description=problem_description,
+            )
         
         # Step 3: Construct Final Prompt
         template = self.PROMPT_TEMPLATE if use_detailed_template else self.SIMPLE_PROMPT_TEMPLATE
         
-        problem_section = ""
-        if problem_description:
-            problem_section = f"## Problem Description\n{problem_description}"
+        user_requirements = problem_description.strip()
+        if user_requirements:
+            requirements_section = (
+                "## Test Requirements\n"
+                "1. Use the unittest framework (import unittest)\n"
+                "2. Generate only the unittest code. Do not repeat the original code:\n"
+                "3. User specified requirements:\n"
+                f"{user_requirements}"
+            )
+        else:
+            requirements_section = (
+                "## Requirements\n"
+                "1. Use the unittest framework (import unittest)\n"
+                "2. Follow the test intentions above as your guide\n"
+                "3. Include setup/teardown if needed\n"
+                "4. Test all identified edge cases and error conditions\n"
+                "5. Use descriptive test method names that reflect the intention\n"
+                "6. Include assertions that verify expected behavior\n"
+                "7. Only output the test class and functions."
+            )
         
         final_prompt = template.format(
             structure_summary=structure_summary,
             intentions=intentions.to_prompt_format(),
             code=code,
-            problem_section=problem_section,
+            requirements_section=requirements_section,
         )
         
         return AdaptivePromptResult(
@@ -288,9 +291,9 @@ class AdaptivePromptBuilder:
         return self
     
     def add_description(self, description: str) -> 'AdaptivePromptBuilder':
-        """Add problem description."""
+        """Add test requirements (formerly problem description)."""
         if description:
-            self.sections.append(f"## Problem Description\n{description}")
+            self.sections.append(f"## User Test Requirements\n{description}")
         return self
     
     def add_custom_section(self, title: str, content: str) -> 'AdaptivePromptBuilder':
@@ -308,9 +311,12 @@ class AdaptivePromptBuilder:
                 "Write comprehensive unit tests for the provided code."
             )
         
+        # Check if we added custom problem description (which are now requirements)
+        has_user_requirements = any("Test Requirements" in section for section in self.sections)
+        
         prompt_parts.extend(self.sections)
         
-        if include_instructions:
+        if include_instructions and not has_user_requirements:
             prompt_parts.append(
                 "\n## Requirements\n"
                 "1. Use the unittest framework\n"
@@ -318,7 +324,14 @@ class AdaptivePromptBuilder:
                 "3. Test all identified edge cases and error conditions\n"
                 "4. Generate complete, runnable test code"
             )
-        
+        elif include_instructions:
+            # We add base requirements if user requirements are present
+            prompt_parts.append(
+                "\n## Additional Requirements\n"
+                "1. Use the unittest framework\n"
+                "2. Generate complete, runnable test code"
+            )
+            
         return '\n\n'.join(prompt_parts)
 
 
@@ -326,7 +339,6 @@ class AdaptivePromptBuilder:
 def create_adaptive_prompt(
     code: str,
     problem_description: str = "",
-    use_mock: bool = False,
 ) -> str:
     """
     Quick function to create an adaptive prompt.
@@ -334,12 +346,11 @@ def create_adaptive_prompt(
     Args:
         code: Python source code
         problem_description: Optional description
-        use_mock: Use mock intention generator
         
     Returns:
         The constructed prompt string
     """
-    prompter = AdaptivePrompter(use_mock_intentions=use_mock)
+    prompter = AdaptivePrompter()
     result = prompter.create_adaptive_prompt(code, problem_description)
     return result.final_prompt
 
@@ -372,8 +383,8 @@ class Calculator:
         return result
 '''
     
-    # Create adaptive prompt (using mock for demo)
-    prompter = AdaptivePrompter(use_mock_intentions=True)
+    # Create adaptive prompt
+    prompter = AdaptivePrompter()
     result = prompter.create_adaptive_prompt(
         code=sample_code,
         problem_description="A calculator with basic arithmetic operations",

@@ -5,8 +5,6 @@ import * as vscode from 'vscode';
 const BACKEND_BASE = 'http://localhost:5000';
 const GENERATE_TESTS_URL = `${BACKEND_BASE}/generate-tests`;
 const GENERATE_ADAPTIVE_URL = `${BACKEND_BASE}/generate-tests-adaptive`;
-const ANALYZE_CODE_URL = `${BACKEND_BASE}/analyze-code`;
-const GENERATE_INTENTIONS_URL = `${BACKEND_BASE}/generate-intentions`;
 const HEALTH_URL = `${BACKEND_BASE}/health`;
 
 /**
@@ -139,34 +137,6 @@ async function generateTests(code, description = '', useAdaptive = true, maxToke
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         return { tests: '', error: errorMessage };
-    }
-}
-
-/**
- * Analyze code structure using backend
- * @param {string} code - Python code to analyze
- * @returns {Promise<{structure: object|null, summary: string, error?: string}>}
- */
-async function analyzeCode(code) {
-    try {
-        const response = await fetch(ANALYZE_CODE_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code }),
-            signal: AbortSignal.timeout(30000),
-        });
-        
-        if (!response.ok) {
-            const error = await response.text();
-            return { structure: null, summary: '', error: `HTTP ${response.status}: ${error}` };
-        }
-        
-        /** @type {{structure?: object, summary?: string}} */
-        const result = await response.json();
-        return { structure: result.structure || null, summary: result.summary || '' };
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        return { structure: null, summary: '', error: errorMessage };
     }
 }
 
@@ -330,12 +300,12 @@ async function selectFilesAndGenerateTests(context) {
     }));
     
     const selected = await vscode.window.showQuickPick(items, {
-        canPickMany: true,
-        placeHolder: 'Select Python files to generate tests for',
-        title: 'Select Python Files',
+        canPickMany: false,
+        placeHolder: 'Select a Python file to generate tests for',
+        title: 'Select Python File',
     });
     
-    if (!selected || selected.length === 0) {
+    if (!selected) {
         return;
     }
     
@@ -366,12 +336,13 @@ async function selectFilesAndGenerateTests(context) {
         },
         async (progress, token) => {
             const results = [];
-            const total = selected.length;
+            const filesToProcess = [selected];
+            const total = filesToProcess.length;
             
-            for (let i = 0; i < selected.length; i++) {
+            for (let i = 0; i < filesToProcess.length; i++) {
                 if (token.isCancellationRequested) break;
                 
-                const file = selected[i];
+                const file = filesToProcess[i];
                 progress.report({ 
                     message: `Processing ${file.label} (${i + 1}/${total})`,
                     increment: (100 / total)
@@ -419,181 +390,9 @@ async function selectFilesAndGenerateTests(context) {
                         }
                     });
                 }
-            } else {
-                // Multiple files - merge results
-                const successResults = results.filter(r => r.tests && !r.error);
-                const failedFiles = results.filter(r => r.error).map(r => r.file);
-                
-                if (successResults.length === 0) {
-                    vscode.window.showErrorMessage('Failed to generate tests for all selected files.');
-                    return;
-                }
-                
-                // Merge all test code
-                let mergedCode = '"""Auto-generated unit tests"""\nimport unittest\n\n';
-                
-                for (const result of successResults) {
-                    mergedCode += `# Tests for ${result.file}\n`;
-                    mergedCode += result.tests + '\n\n';
-                }
-                
-                mergedCode += "\nif __name__ == '__main__':\n    unittest.main()\n";
-                
-                const panel = createResultsPanel(context, 'Generated Tests', mergedCode);
-                
-                if (failedFiles.length > 0) {
-                    vscode.window.showWarningMessage(`Could not generate tests for: ${failedFiles.join(', ')}`);
-                }
-                
-                panel.webview.onDidReceiveMessage(async message => {
-                    if (message.command === 'copied') {
-                        vscode.window.showInformationMessage('Tests copied to clipboard!');
-                    } else if (message.command === 'save') {
-                        const uri = await vscode.window.showSaveDialog({
-                            defaultUri: vscode.Uri.file('test_generated.py'),
-                            filters: { 'Python': ['py'] }
-                        });
-                        if (uri) {
-                            await vscode.workspace.fs.writeFile(uri, Buffer.from(message.code, 'utf8'));
-                            vscode.window.showInformationMessage(`Tests saved to ${uri.fsPath}`);
-                        }
-                    }
-                });
             }
         }
     );
-}
-
-/**
- * Generate tests for the currently active file
- * @param {vscode.ExtensionContext} context
- */
-async function generateTestsForActiveFile(context) {
-    const editor = vscode.window.activeTextEditor;
-    
-    if (!editor) {
-        vscode.window.showWarningMessage('No active editor found.');
-        return;
-    }
-    
-    const document = editor.document;
-    
-    if (document.languageId !== 'python') {
-        vscode.window.showWarningMessage('The active file is not a Python file.');
-        return;
-    }
-    
-    // Check backend health
-    const isHealthy = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'Checking backend connection...' },
-        () => checkBackendHealth()
-    );
-    
-    if (!isHealthy) {
-        vscode.window.showErrorMessage('Cannot connect to the backend server. Make sure it is running on http://localhost:5000');
-        return;
-    }
-    
-    const code = document.getText();
-    const fileName = vscode.workspace.asRelativePath(document.uri);
-    
-    // Generate with progress
-    await vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title: `Generating tests for ${fileName}...`,
-            cancellable: false,
-        },
-        async () => {
-            const result = await generateTests(code, '', true);
-            
-            if (result.error) {
-                vscode.window.showErrorMessage(`Failed to generate tests: ${result.error}`);
-                return;
-            }
-            
-            if (result.tests) {
-                const panel = createResultsPanel(context, `Tests for ${fileName}`, result.tests);
-                
-                panel.webview.onDidReceiveMessage(async message => {
-                    if (message.command === 'copied') {
-                        vscode.window.showInformationMessage('Tests copied to clipboard!');
-                    } else if (message.command === 'save') {
-                        const baseName = fileName.replace('.py', '');
-                        const uri = await vscode.window.showSaveDialog({
-                            defaultUri: vscode.Uri.file(`test_${baseName}.py`),
-                            filters: { 'Python': ['py'] }
-                        });
-                        if (uri) {
-                            await vscode.workspace.fs.writeFile(uri, Buffer.from(message.code, 'utf8'));
-                            vscode.window.showInformationMessage(`Tests saved to ${uri.fsPath}`);
-                        }
-                    }
-                });
-            }
-        }
-    );
-}
-
-/**
- * Analyze code structure of the active file
- * @param {vscode.ExtensionContext} context
- */
-async function analyzeActiveFile(context) {
-    const editor = vscode.window.activeTextEditor;
-    
-    if (!editor) {
-        vscode.window.showWarningMessage('No active editor found.');
-        return;
-    }
-    
-    const document = editor.document;
-    
-    if (document.languageId !== 'python') {
-        vscode.window.showWarningMessage('The active file is not a Python file.');
-        return;
-    }
-    
-    const code = document.getText();
-    
-    await vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title: 'Analyzing code structure...',
-            cancellable: false,
-        },
-        async () => {
-            const result = await analyzeCode(code);
-            
-            if (result.error) {
-                vscode.window.showErrorMessage(`Analysis failed: ${result.error}`);
-                return;
-            }
-            
-            if (result.summary) {
-                vscode.window.showInformationMessage(result.summary, { modal: true });
-            }
-        }
-    );
-}
-
-/**
- * Configure backend URL
- */
-async function configureBackend() {
-    const config = vscode.workspace.getConfiguration('fypTestGenerator');
-    const currentUrl = config.get('backendUrl', BACKEND_BASE);
-    
-    const newUrl = await vscode.window.showInputBox({
-        prompt: 'Enter the backend server URL',
-        value: currentUrl,
-        placeHolder: 'http://localhost:5000',
-    });
-    
-    if (newUrl) {
-        await config.update('backendUrl', newUrl, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage(`Backend URL updated to: ${newUrl}`);
-    }
 }
 
 /**
@@ -609,33 +408,8 @@ export function activate(context) {
         () => selectFilesAndGenerateTests(context)
     );
     
-    const generateForActiveCommand = vscode.commands.registerCommand(
-        'fyp-extension.generateTestsForActiveFile',
-        () => generateTestsForActiveFile(context)
-    );
-    
-    const analyzeCommand = vscode.commands.registerCommand(
-        'fyp-extension.analyzeCode',
-        () => analyzeActiveFile(context)
-    );
-    
-    const configureCommand = vscode.commands.registerCommand(
-        'fyp-extension.configureBackend',
-        () => configureBackend()
-    );
-    
-    // Legacy hello world command (can be removed)
-    const helloCommand = vscode.commands.registerCommand(
-        'fyp-extension.helloWorld',
-        () => vscode.window.showInformationMessage('FYP Test Generator Extension is active!')
-    );
-    
     context.subscriptions.push(
-        selectFilesCommand,
-        generateForActiveCommand,
-        analyzeCommand,
-        configureCommand,
-        helloCommand
+        selectFilesCommand
     );
 }
 
