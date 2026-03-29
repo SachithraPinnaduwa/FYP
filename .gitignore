@@ -96,7 +96,7 @@ credentials
 # --------------------
 # IDEs, editors, OS
 # --------------------
-.vscode/
+
 .idea/
 *.iml
 *.sublime-project
