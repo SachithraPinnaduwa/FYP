@@ -1,12 +1,11 @@
 import sys
 import os
-import json
+import argparse
 from pathlib import Path
 from tqdm import tqdm
-import argparse
 from datasets import load_dataset
 
-# Setup local paths for benchmark2 imports
+# Setup local paths for benchmark3 imports
 current_dir = Path(__file__).resolve().parent
 if str(current_dir) not in sys.path:
     sys.path.append(str(current_dir))
@@ -14,59 +13,39 @@ if str(current_dir) not in sys.path:
 from evaluation.dataset_eval import DatasetBenchmarkEvaluator
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Benchmark on KAKA22/CodeRM-UnitTest (Test Split)")
+    parser = argparse.ArgumentParser(description="Run Benchmark to Compare Simple vs Adaptive Prompting via Backend API")
     parser.add_argument("--samples", type=int, default=100, help="Number of samples to evaluate (default: 100)")
     parser.add_argument("--stage", choices=["setup", "generate", "evaluate", "all"], default="all", help="Stage to run")
+    parser.add_argument("--backend_url", type=str, default="http://127.0.0.1:5000", help="URL of the backend API")
     args = parser.parse_args()
 
-    print("\nSelect the model you want to benchmark:")
-    print("1) Base Model (Qwen2.5-Coder-7B-Instruct-bnb-4bit via Unsloth)")
-    print("2) Finetuned Model (GGUF localized)")
-    print("3) Qwen3.5-4B Base Model (unsloth/Qwen3.5-4B via Unsloth)")
-    print("4) Gemma-3-4B-IT Base Model (unsloth/gemma-3-4b-it via Unsloth)")
-    print("5) Starcoder2-7B Model (bigcode/starcoder2-7b with bitsandbytes)")
-    print("6) Pynguin Generator (Automated Unit Test Generation)")
+    print("\nSelect the prompting method you want to benchmark:")
+    print("1) Simple Prompting (Calls /generate-tests in backend)")
+    print("2) Adaptive Prompting (Calls /generate-tests-adaptive in backend)")
     
-    choice = input("\nEnter choice (1, 2, 3, 4, 5, or 6): ").strip()
+    choice = input("\nEnter choice (1 or 2): ").strip()
     
     if choice == "1":
-        model_name = "base_model"
-        from models.base_model import BaseModelGenerator
-        generator_class_name = "BaseModelGenerator"
+        model_name = "api_simple_prompt"
+        from models.api_model import APISimplePromptGenerator
+        GeneratorClass = APISimplePromptGenerator
     elif choice == "2":
-        model_name = "finetuned_model"
-        from models.gguf_model import GGUFModelGenerator
-        generator_class_name = "GGUFModelGenerator"
-    elif choice == "3":
-        model_name = "qwen3.5_base"
-        from models.qwen35_base_model import Qwen35BaseModelGenerator
-        generator_class_name = "Qwen35BaseModelGenerator"
-    elif choice == "4":
-        model_name = "gemma4b_base"
-        from models.gemma4b_base_model import Gemma4BBaseModelGenerator
-        generator_class_name = "Gemma4BBaseModelGenerator"
-    elif choice == "5":
-        model_name = "starcoder2_7b"
-        from models.starcoder2_7b_model import Starcoder2_7bModelGenerator
-        generator_class_name = "Starcoder2_7bModelGenerator"
-    elif choice == "6":
-        model_name = "pynguin"
-        from models.pynguin_generator import PynguinGenerator
-        generator_class_name = "PynguinGenerator"
+        model_name = "api_adaptive_prompt"
+        from models.api_model import APIAdaptivePromptGenerator
+        GeneratorClass = APIAdaptivePromptGenerator
     else:
-        print("Invalid choice, defaulting to Base Model.")
-        model_name = "base_model"
-        from models.base_model import BaseModelGenerator
-        generator_class_name = "BaseModelGenerator"
+        print("Invalid choice, defaulting to Simple Prompting.")
+        model_name = "api_simple_prompt"
+        from models.api_model import APISimplePromptGenerator
+        GeneratorClass = APISimplePromptGenerator
 
-    # Directories mapping inside benchmark2
+    # Directories mapping inside benchmark3
     base_dir = current_dir
     subjects_dir = base_dir / "subjects" / "dataset"
     generated_dir = base_dir / "generated_tests" / model_name
     results_dir = base_dir / "results"
 
     if args.stage in ["setup", "generate", "all"]:
-        # Directly load the dataset and subset here
         print(f"\n--- Loading {args.samples} samples from KAKA22/CodeRM-UnitTest (Test Split) ---")
         dataset = load_dataset("KAKA22/CodeRM-UnitTest", split="test")
         dataset = dataset.shuffle(seed=42).select(range(args.samples))
@@ -76,62 +55,51 @@ def main():
         generated_dir.mkdir(parents=True, exist_ok=True)
         
         if args.stage in ["generate", "all"]:
-            print(f"\n--- [1] Generating Tests using {generator_class_name} ---")
+            print(f"\n--- Generating Tests using {model_name} backend API ---")
             
-            if model_name == "base_model":
-                generator = BaseModelGenerator()
-            elif model_name == "finetuned_model":
-                generator = GGUFModelGenerator()
-            elif model_name == "starcoder2_7b":
-                generator = Starcoder2_7bModelGenerator()
-            elif model_name == "qwen3.5_base":
-                generator = Qwen35BaseModelGenerator()
-            elif model_name == "gemma4b_base":
-                generator = Gemma4BBaseModelGenerator()
-            elif model_name == "pynguin":
-                generator = PynguinGenerator()
+            generator = GeneratorClass(backend_url=args.backend_url)
             
             for i, sample in enumerate(tqdm(dataset, desc="Generating Tests")):
-                # Ensure a stable ID for both subject and test
                 subject_id = f"subject_{i}"
-                
-                # 1. We MUST write out the subject.py because evaluation tools (coverage/mutation) 
-                # execute at the file level and need an actual file to import.
                 subject_file = subjects_dir / f"{subject_id}.py"
-                with open(subject_file, "w", encoding="utf-8") as f:
-                    f.write(sample["code_ground_truth"])
                 
-                # 2. Generate and write the test
-                test_file_path = generated_dir / f"test_{subject_id}.py"
-                if test_file_path.exists():
-                    continue # Skip if already generated
+                # Write the subject file
+                code = sample["code_ground_truth"]
                 
-                test_code = generator.generate_tests(
-                    code=sample["code_ground_truth"], 
-                    problem_description=sample["question"]
-                )
+                # Avoid permission issues or duplicate writes if it exists (but we'll overwrite safely)
+                with open(subject_file, "w") as f:
+                    f.write(code)
                 
-                with open(test_file_path, "w", encoding="utf-8") as f:
-                    f.write(test_code)
-                    
-            # Save a summary file
-            summary = {
-                "model": model_name,
-                "samples": len(dataset),
-                "output_dir": str(generated_dir)
-            }
-            with open(generated_dir / "generation_summary.json", "w") as f:
-                json.dump(summary, f, indent=4)
-            print(f"Generated tests saved to {generated_dir}")
+                # Prepare a placeholder or empty content test file
+                gen_test_file = generated_dir / f"test_{subject_id}.py"
+                if gen_test_file.exists():
+                    print(f"Skipping {subject_id} as it already exists in {generated_dir}...")
+                    continue
+                
+                problem_description = sample.get("question", "")
+                
+                # Generate via API
+                generated_test_code = generator.generate_tests(code, problem_description)
+                
+                # Save generated code
+                with open(gen_test_file, "w") as f:
+                    # Provide default imports to help tests
+                    if "import pytest" not in generated_test_code and "import unittest" not in generated_test_code:
+                        f.write("import pytest\nimport unittest\n")
+                    f.write(f"from {subject_id} import *\n\n")
+                    f.write(generated_test_code)
 
     if args.stage in ["evaluate", "all"]:
-        print("\n--- [3] Evaluating Generated Tests ---")
+        print(f"\n--- Running Evaluation for {model_name} ---")
+        
+        # Instantiate evaluator and run all metrics
         evaluator = DatasetBenchmarkEvaluator(
             subjects_dir=str(subjects_dir),
-            generated_tests_dir=str(base_dir / "generated_tests"), # Evaluate all models in generated_tests folder
+            generated_tests_dir=str(base_dir / "generated_tests"),
             results_dir=str(results_dir)
         )
         
+        # Evaluate everything
         results = evaluator.evaluate_all(
             run_coverage=True,
             run_mutation=True,
@@ -139,9 +107,11 @@ def main():
         )
         
         summary = evaluator.summarize_results(results)
+        import json
         print("\n--- Evaluation Summary ---")
         print(json.dumps(summary, indent=4))
-        print(f"Results saved to {results_dir}")
+        
+        print(f"\n✅ Benchmark completed! Results saved to {results_dir}")
 
 if __name__ == "__main__":
     main()
