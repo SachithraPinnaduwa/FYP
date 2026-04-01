@@ -148,6 +148,15 @@ try:
     import importlib.util
     spec = importlib.util.spec_from_file_location("test_module", "{test_file}")
     test_module = importlib.util.module_from_spec(spec)
+    
+    # Inject subject functions
+    import sys
+    sys.modules["test_module"] = test_module
+    import {subject}
+    for name in dir({subject}):
+        if not name.startswith('_'):
+            setattr(test_module, name, getattr({subject}, name))
+            
     spec.loader.exec_module(test_module)
     
     # Discover tests from the module

@@ -1,0 +1,5 @@
+{
+    "model": "qwen3.5_base",
+    "samples": 100,
+    "output_dir": "/mnt/3acdb100-d601-4408-8ece-42dccaeb2910/FYP/benchmark/generated_tests/qwen3.5_base"
+}

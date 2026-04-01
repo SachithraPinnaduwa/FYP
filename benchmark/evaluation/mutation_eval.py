@@ -281,9 +281,17 @@ sys.path.insert(0, "{test_file.parent}")
 import {original_subject.stem}
 
 # Load and run tests
+import sys
 import importlib.util
 spec = importlib.util.spec_from_file_location("test_module", "{test_file}")
 test_module = importlib.util.module_from_spec(spec)
+
+# Inject subject functions
+sys.modules["test_module"] = test_module
+for name in dir({original_subject.stem}):
+    if not name.startswith('_'):
+        setattr(test_module, name, getattr({original_subject.stem}, name))
+            
 spec.loader.exec_module(test_module)
 
 loader = unittest.TestLoader()

@@ -29,7 +29,7 @@ class Gemma4BBaseModelGenerator:
 
     def generate_tests(self, code: str, problem_description: str = "") -> str:
         complex_input = f"Problem Description:\n{problem_description}\n\nCode to Test:\n{code}"
-        prompt = f"Write a comprehensive Python unit test suite for the provided code.\n\n{complex_input}"
+        prompt = f"Write a comprehensive Python unit test suite for the provided code. Do NOT include the original code in your response, only provide the test cases.\n\n{complex_input}"
         
         messages = [{
             "role": "user",

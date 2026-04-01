@@ -22,11 +22,8 @@ class CoverageResult:
     test_file: str
     subject_file: str
     statement_coverage: float = 0.0
-    branch_coverage: float = 0.0
     statements_covered: int = 0
     statements_total: int = 0
-    branches_covered: int = 0
-    branches_total: int = 0
     missing_lines: List[int] = field(default_factory=list)
     error: str = ""
     success: bool = False
@@ -99,7 +96,6 @@ import unittest
 # Start coverage
 cov = coverage.Coverage(
     source=["{subject_file.parent}"],
-    branch=True,
     data_file="{coverage_file}"
 )
 cov.start()
@@ -113,9 +109,17 @@ try:
     import {subject}
     
     # Load test module
+    import sys
     import importlib.util
     spec = importlib.util.spec_from_file_location("test_module", "{test_file}")
     test_module = importlib.util.module_from_spec(spec)
+    
+    # Inject subject functions
+    sys.modules["test_module"] = test_module
+    for name in dir({subject}):
+        if not name.startswith('_'):
+            setattr(test_module, name, getattr({subject}, name))
+            
     spec.loader.exec_module(test_module)
     
     # Run tests
@@ -163,10 +167,6 @@ print("COVERAGE_DONE")
                             result.statements_total = summary.get("num_statements", 0)
                             result.statement_coverage = summary.get("percent_covered", 0) / 100
                             
-                            result.branches_covered = summary.get("covered_branches", 0)
-                            result.branches_total = summary.get("num_branches", 0)
-                            if result.branches_total > 0:
-                                result.branch_coverage = result.branches_covered / result.branches_total
                             
                             result.missing_lines = file_data.get("missing_lines", [])
                             result.success = True
@@ -224,7 +224,7 @@ print("COVERAGE_DONE")
                 results.append(result)
                 
                 if result.success:
-                    print(f"  ✓ {subject_name}: Statement={result.statement_coverage:.1%}, Branch={result.branch_coverage:.1%}")
+                    print(f"  ✓ {subject_name}: Statement={result.statement_coverage:.1%}")
                 else:
                     print(f"  ✗ {subject_name}: {result.error[:50]}")
         
@@ -243,18 +243,16 @@ print("COVERAGE_DONE")
         csv_file = self.results_dir / "coverage_results.csv"
         with open(csv_file, 'w') as f:
             headers = [
-                "model", "subject", "statement_coverage", "branch_coverage",
-                "statements_covered", "statements_total",
-                "branches_covered", "branches_total", "success"
+                "model", "subject", "statement_coverage",
+                "statements_covered", "statements_total", "success"
             ]
             f.write(",".join(headers) + "\n")
             
             for r in results:
                 row = [
                     r.model, r.subject,
-                    f"{r.statement_coverage:.4f}", f"{r.branch_coverage:.4f}",
+                    f"{r.statement_coverage:.4f}",
                     str(r.statements_covered), str(r.statements_total),
-                    str(r.branches_covered), str(r.branches_total),
                     str(r.success)
                 ]
                 f.write(",".join(row) + "\n")
@@ -276,31 +274,22 @@ print("COVERAGE_DONE")
                 summary[model] = {
                     "subjects": 0,
                     "total_statement_coverage": 0.0,
-                    "total_branch_coverage": 0.0,
                     "statements_covered": 0,
                     "statements_total": 0,
-                    "branches_covered": 0,
-                    "branches_total": 0,
                 }
             
             s = summary[model]
             s["subjects"] += 1
             s["total_statement_coverage"] += result.statement_coverage
-            s["total_branch_coverage"] += result.branch_coverage
             s["statements_covered"] += result.statements_covered
             s["statements_total"] += result.statements_total
-            s["branches_covered"] += result.branches_covered
-            s["branches_total"] += result.branches_total
         
         # Calculate averages
         for model, s in summary.items():
             if s["subjects"] > 0:
                 s["avg_statement_coverage"] = s["total_statement_coverage"] / s["subjects"]
-                s["avg_branch_coverage"] = s["total_branch_coverage"] / s["subjects"]
             if s["statements_total"] > 0:
                 s["overall_statement_coverage"] = s["statements_covered"] / s["statements_total"]
-            if s["branches_total"] > 0:
-                s["overall_branch_coverage"] = s["branches_covered"] / s["branches_total"]
         
         return summary
 
@@ -333,7 +322,6 @@ def main():
         print(f"\n{model}:")
         print(f"  Subjects evaluated: {stats['subjects']}")
         print(f"  Avg Statement Coverage: {stats.get('avg_statement_coverage', 0):.1%}")
-        print(f"  Avg Branch Coverage: {stats.get('avg_branch_coverage', 0):.1%}")
         print(f"  Overall Statement: {stats['statements_covered']}/{stats['statements_total']}")
 
 

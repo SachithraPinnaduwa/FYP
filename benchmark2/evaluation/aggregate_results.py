@@ -28,7 +28,6 @@ class AggregatedMetrics:
     
     # Coverage metrics
     statement_coverage: float = 0.0
-    branch_coverage: float = 0.0
     
     # Mutation testing metrics
     mutation_score: float = 0.0
@@ -111,7 +110,6 @@ class ResultAggregator:
             if (model, subject) in coverage_results:
                 cr = coverage_results[(model, subject)]
                 metrics.statement_coverage = cr.get("statement_coverage", 0.0)
-                metrics.branch_coverage = cr.get("branch_coverage", 0.0)
             
             # Mutation results
             if (model, subject) in mutation_results:
@@ -123,7 +121,7 @@ class ResultAggregator:
             # Calculate composite score (weighted average)
             # Weights: runnability 0.1, coverage 0.4, mutation 0.5
             runnable_score = 1.0 if metrics.runnable else 0.0
-            coverage_score = (metrics.statement_coverage + metrics.branch_coverage) / 2
+            coverage_score = metrics.statement_coverage
             
             metrics.composite_score = (
                 0.1 * runnable_score +
@@ -148,7 +146,6 @@ class ResultAggregator:
                     "total_tests_run": 0,
                     "total_tests_passed": 0,
                     "total_statement_coverage": 0.0,
-                    "total_branch_coverage": 0.0,
                     "total_mutation_score": 0.0,
                     "total_composite_score": 0.0,
                 }
@@ -160,7 +157,6 @@ class ResultAggregator:
             s["total_tests_run"] += m.tests_run
             s["total_tests_passed"] += m.tests_passed
             s["total_statement_coverage"] += m.statement_coverage
-            s["total_branch_coverage"] += m.branch_coverage
             s["total_mutation_score"] += m.mutation_score
             s["total_composite_score"] += m.composite_score
         
@@ -171,7 +167,6 @@ class ResultAggregator:
                 s["syntax_rate"] = s["syntax_valid"] / n
                 s["runnable_rate"] = s["runnable"] / n
                 s["avg_statement_coverage"] = s["total_statement_coverage"] / n
-                s["avg_branch_coverage"] = s["total_branch_coverage"] / n
                 s["avg_mutation_score"] = s["total_mutation_score"] / n
                 s["avg_composite_score"] = s["total_composite_score"] / n
             if s["total_tests_run"] > 0:
@@ -198,8 +193,8 @@ class ResultAggregator:
         # Model comparison table
         report.append("\n### MODEL COMPARISON ###\n")
         
-        headers = ["Model", "Syntax%", "Run%", "Stmt Cov%", "Branch Cov%", "Mutation%", "Composite"]
-        col_widths = [15, 10, 10, 12, 12, 12, 12]
+        headers = ["Model", "Syntax%", "Run%", "Stmt Cov%", "Mutation%", "Composite"]
+        col_widths = [15, 10, 10, 12, 12, 12]
         
         header_row = "".join(h.ljust(w) for h, w in zip(headers, col_widths))
         report.append(header_row)
@@ -211,7 +206,6 @@ class ResultAggregator:
                 f"{s.get('syntax_rate', 0)*100:.1f}%",
                 f"{s.get('runnable_rate', 0)*100:.1f}%",
                 f"{s.get('avg_statement_coverage', 0)*100:.1f}%",
-                f"{s.get('avg_branch_coverage', 0)*100:.1f}%",
                 f"{s.get('avg_mutation_score', 0)*100:.1f}%",
                 f"{s.get('avg_composite_score', 0)*100:.1f}%",
             ]
@@ -263,7 +257,7 @@ class ResultAggregator:
             headers = [
                 "model", "subject", "syntax_valid", "runnable",
                 "tests_run", "tests_passed", "test_pass_rate",
-                "statement_coverage", "branch_coverage",
+                "statement_coverage",
                 "mutation_score", "mutants_killed", "mutants_total",
                 "composite_score"
             ]
@@ -273,7 +267,7 @@ class ResultAggregator:
                 writer.writerow([
                     m.model, m.subject, m.syntax_valid, m.runnable,
                     m.tests_run, m.tests_passed, f"{m.test_pass_rate:.4f}",
-                    f"{m.statement_coverage:.4f}", f"{m.branch_coverage:.4f}",
+                    f"{m.statement_coverage:.4f}",
                     f"{m.mutation_score:.4f}", m.mutants_killed, m.mutants_total,
                     f"{m.composite_score:.4f}"
                 ])

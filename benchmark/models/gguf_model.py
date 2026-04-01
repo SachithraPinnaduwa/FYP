@@ -21,9 +21,15 @@ class GGUFModelGenerator:
         )
 
     def generate_tests(self, code: str, problem_description: str = "") -> str:
+        user_content = (
+            "Write a comprehensive Python unit test suite for this code.\n"
+            "Do NOT include the original code in your response, only provide the test cases.\n\n"
+            f"Problem Description:\n{problem_description}\n\n"
+            f"Code to Test:\n{code}"
+        )
         messages = [
             {"role": "system", "content": "You are a helpful coding assistant that writes Python unit tests."},
-            {"role": "user", "content": f"Write a comprehensive Python unit test suite for this code.\n\nProblem Description:\n{problem_description}\n\nCode to Test:\n{code}"}
+            {"role": "user", "content": user_content}
         ]
         
         output = self.llm.create_chat_completion(

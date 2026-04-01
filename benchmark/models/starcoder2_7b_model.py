@@ -34,7 +34,7 @@ class Starcoder2_7bModelGenerator:
 
     def generate_tests(self, code: str, problem_description: str = "") -> str:
         complex_input = f"Problem Description:\n{problem_description}\n\nCode to Test:\n{code}"
-        instruction = "Write a comprehensive Python unit test suite for the provided code."
+        instruction = "Write a comprehensive Python unit test suite for the provided code. Do NOT include the original code in your response, only provide the test cases."
         prompt = alpaca_prompt.format(instruction, complex_input, "")
 
         inputs = self.tokenizer.encode(prompt, return_tensors="pt").to("cuda")

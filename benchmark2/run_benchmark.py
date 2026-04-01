@@ -3,7 +3,6 @@ import os
 import argparse
 from pathlib import Path
 from tqdm import tqdm
-from datasets import load_dataset
 
 # Setup local paths for benchmark3 imports
 current_dir = Path(__file__).resolve().parent
@@ -46,29 +45,29 @@ def main():
     results_dir = base_dir / "results"
 
     if args.stage in ["setup", "generate", "all"]:
-        print(f"\n--- Loading {args.samples} samples from KAKA22/CodeRM-UnitTest (Test Split) ---")
-        dataset = load_dataset("KAKA22/CodeRM-UnitTest", split="test")
-        dataset = dataset.shuffle(seed=42).select(range(args.samples))
+        print(f"\n--- Reading up to {args.samples} samples from local dataset {subjects_dir} ---")
         
         # Make directories
         subjects_dir.mkdir(parents=True, exist_ok=True)
         generated_dir.mkdir(parents=True, exist_ok=True)
+        
+        import glob
+        subject_files = glob.glob(str(subjects_dir / "subject_*.py"))
+        subject_files.sort(key=lambda x: int(Path(x).stem.split('_')[1]))
+        
+        if len(subject_files) > args.samples:
+            subject_files = subject_files[:args.samples]
         
         if args.stage in ["generate", "all"]:
             print(f"\n--- Generating Tests using {model_name} backend API ---")
             
             generator = GeneratorClass(backend_url=args.backend_url)
             
-            for i, sample in enumerate(tqdm(dataset, desc="Generating Tests")):
-                subject_id = f"subject_{i}"
-                subject_file = subjects_dir / f"{subject_id}.py"
+            for subject_file_path in tqdm(subject_files, desc="Generating Tests"):
+                subject_id = Path(subject_file_path).stem
                 
-                # Write the subject file
-                code = sample["code_ground_truth"]
-                
-                # Avoid permission issues or duplicate writes if it exists (but we'll overwrite safely)
-                with open(subject_file, "w") as f:
-                    f.write(code)
+                with open(subject_file_path, "r", encoding="utf-8") as f:
+                    code_ground_truth = f.read()
                 
                 # Prepare a placeholder or empty content test file
                 gen_test_file = generated_dir / f"test_{subject_id}.py"
@@ -76,10 +75,8 @@ def main():
                     print(f"Skipping {subject_id} as it already exists in {generated_dir}...")
                     continue
                 
-                problem_description = sample.get("question", "")
-                
                 # Generate via API
-                generated_test_code = generator.generate_tests(code, problem_description)
+                generated_test_code = generator.generate_tests(code_ground_truth, "")
                 
                 # Save generated code
                 with open(gen_test_file, "w") as f:

@@ -34,7 +34,6 @@ class DatasetEvalResult:
     
     # Coverage metrics
     statement_coverage: float = 0.0
-    branch_coverage: float = 0.0
     statements_covered: int = 0
     statements_total: int = 0
     
@@ -181,7 +180,6 @@ class DatasetBenchmarkEvaluator:
                     try:
                         cov_result = coverage_eval.measure_coverage(test_file, subject_file)
                         result.statement_coverage = cov_result.statement_coverage
-                        result.branch_coverage = cov_result.branch_coverage
                         result.statements_covered = cov_result.statements_covered
                         result.statements_total = cov_result.statements_total
                     except Exception as e:
@@ -224,7 +222,7 @@ class DatasetBenchmarkEvaluator:
             headers = [
                 "model", "subject_id", "syntax_valid", "runnable",
                 "tests_run", "tests_passed", "tests_failed",
-                "statement_coverage", "branch_coverage",
+                "statement_coverage",
                 "mutation_score", "mutants_killed", "mutants_total",
                 "has_ground_truth"
             ]
@@ -234,7 +232,7 @@ class DatasetBenchmarkEvaluator:
                 row = [
                     r.model, r.subject_id, str(r.syntax_valid), str(r.runnable),
                     str(r.tests_run), str(r.tests_passed), str(r.tests_failed),
-                    f"{r.statement_coverage:.4f}", f"{r.branch_coverage:.4f}",
+                    f"{r.statement_coverage:.4f}",
                     f"{r.mutation_score:.4f}", str(r.mutants_killed), str(r.mutants_total),
                     str(r.has_ground_truth)
                 ]
@@ -258,7 +256,6 @@ class DatasetBenchmarkEvaluator:
                     "total_tests_run": 0,
                     "total_tests_passed": 0,
                     "total_statement_coverage": 0.0,
-                    "total_branch_coverage": 0.0,
                     "total_mutation_score": 0.0,
                     "coverage_count": 0,  # Count of subjects with coverage data
                     "mutation_count": 0,  # Count of subjects with mutation data
@@ -273,7 +270,6 @@ class DatasetBenchmarkEvaluator:
             
             if result.statement_coverage > 0:
                 s["total_statement_coverage"] += result.statement_coverage
-                s["total_branch_coverage"] += result.branch_coverage
                 s["coverage_count"] += 1
             
             if result.mutants_total > 0:
@@ -290,7 +286,6 @@ class DatasetBenchmarkEvaluator:
                 s["test_pass_rate"] = s["total_tests_passed"] / s["total_tests_run"]
             if s["coverage_count"] > 0:
                 s["avg_statement_coverage"] = s["total_statement_coverage"] / s["coverage_count"]
-                s["avg_branch_coverage"] = s["total_branch_coverage"] / s["coverage_count"]
             if s["mutation_count"] > 0:
                 s["avg_mutation_score"] = s["total_mutation_score"] / s["mutation_count"]
         
@@ -335,7 +330,6 @@ def main():
         print(f"  Runnable: {stats.get('runnable_rate', 0):.1%}")
         print(f"  Test Pass Rate: {stats.get('test_pass_rate', 0):.1%}")
         print(f"  Avg Statement Coverage: {stats.get('avg_statement_coverage', 0):.1%}")
-        print(f"  Avg Branch Coverage: {stats.get('avg_branch_coverage', 0):.1%}")
         print(f"  Avg Mutation Score: {stats.get('avg_mutation_score', 0):.1%}")
 
 

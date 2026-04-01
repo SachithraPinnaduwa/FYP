@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from tqdm import tqdm
 import argparse
-from datasets import load_dataset
 
 # Setup local paths for benchmark2 imports
 current_dir = Path(__file__).resolve().parent
@@ -66,14 +65,18 @@ def main():
     results_dir = base_dir / "results"
 
     if args.stage in ["setup", "generate", "all"]:
-        # Directly load the dataset and subset here
-        print(f"\n--- Loading {args.samples} samples from KAKA22/CodeRM-UnitTest (Test Split) ---")
-        dataset = load_dataset("KAKA22/CodeRM-UnitTest", split="test")
-        dataset = dataset.shuffle(seed=42).select(range(args.samples))
+        print(f"\n--- Reading up to {args.samples} samples from local dataset {subjects_dir} ---")
         
         # Make directories
         subjects_dir.mkdir(parents=True, exist_ok=True)
         generated_dir.mkdir(parents=True, exist_ok=True)
+        
+        import glob
+        subject_files = glob.glob(str(subjects_dir / "subject_*.py"))
+        subject_files.sort(key=lambda x: int(Path(x).stem.split('_')[1]))
+        
+        if len(subject_files) > args.samples:
+            subject_files = subject_files[:args.samples]
         
         if args.stage in ["generate", "all"]:
             print(f"\n--- [1] Generating Tests using {generator_class_name} ---")
@@ -91,15 +94,11 @@ def main():
             elif model_name == "pynguin":
                 generator = PynguinGenerator()
             
-            for i, sample in enumerate(tqdm(dataset, desc="Generating Tests")):
-                # Ensure a stable ID for both subject and test
-                subject_id = f"subject_{i}"
+            for subject_file_path in tqdm(subject_files, desc="Generating Tests"):
+                subject_id = Path(subject_file_path).stem
                 
-                # 1. We MUST write out the subject.py because evaluation tools (coverage/mutation) 
-                # execute at the file level and need an actual file to import.
-                subject_file = subjects_dir / f"{subject_id}.py"
-                with open(subject_file, "w", encoding="utf-8") as f:
-                    f.write(sample["code_ground_truth"])
+                with open(subject_file_path, "r", encoding="utf-8") as f:
+                    code_ground_truth = f.read()
                 
                 # 2. Generate and write the test
                 test_file_path = generated_dir / f"test_{subject_id}.py"
@@ -107,8 +106,8 @@ def main():
                     continue # Skip if already generated
                 
                 test_code = generator.generate_tests(
-                    code=sample["code_ground_truth"], 
-                    problem_description=sample["question"]
+                    code=code_ground_truth, 
+                    problem_description=""
                 )
                 
                 with open(test_file_path, "w", encoding="utf-8") as f:
@@ -117,7 +116,7 @@ def main():
             # Save a summary file
             summary = {
                 "model": model_name,
-                "samples": len(dataset),
+                "samples": len(subject_files),
                 "output_dir": str(generated_dir)
             }
             with open(generated_dir / "generation_summary.json", "w") as f:
