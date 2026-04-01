@@ -28,7 +28,7 @@ class GGUFModelGenerator:
         
         output = self.llm.create_chat_completion(
             messages=messages,
-            max_tokens=512,
+            max_tokens=2048,
             temperature=0.7,
             top_p=0.9
         )
