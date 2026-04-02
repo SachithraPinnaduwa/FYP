@@ -1,0 +1,38 @@
+import unittest
+
+class TestCalculateProgressChecks(unittest.TestCase):
+    def test_calculate_progress_checks(self):
+        self.assertEqual(calculate_progress_checks(10000, 1000, 0.05), 2)
+        self.assertEqual(calculate_progress_checks(5000, 500, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(2000, 200, 0.2), 4)
+        self.assertEqual(calculate_progress_checks(8000, 1000, 0.15), 2)
+        self.assertEqual(calculate_progress_checks(6000, 1000, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(12000, 500, 0.05), 4)
+        self.assertEqual(calculate_progress_checks(15000, 2000, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(1000, 100, 0.05), 1)
+        self.assertEqual(calculate_progress_checks(4000, 500, 0.2), 3)
+        self.assertEqual(calculate_progress_checks(3000, 1000, 0.1), 2)
+        self.assertEqual(calculate_progress_checks(18000, 1000, 0.15), 2)
+        self.assertEqual(calculate_progress_checks(11000, 500, 0.05), 4)
+        self.assertEqual(calculate_progress_checks(14000, 2000, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(1000, 100, 0.05), 1)
+        self.assertEqual(calculate_progress_checks(4000, 500, 0.2), 3)
+        self.assertEqual(calculate_progress_checks(3000, 1000, 0.1), 2)
+        self.assertEqual(calculate_progress_checks(18000, 1000, 0.15), 2)
+        self.assertEqual(calculate_progress_checks(11000, 500, 0.05), 4)
+        self.assertEqual(calculate_progress_checks(14000, 2000, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(1000, 100, 0.05), 1)
+        self.assertEqual(calculate_progress_checks(4000, 500, 0.2), 3)
+        self.assertEqual(calculate_progress_checks(3000, 1000, 0.1), 2)
+        self.assertEqual(calculate_progress_checks(18000, 1000, 0.15), 2)
+        self.assertEqual(calculate_progress_checks(11000, 500, 0.05), 4)
+        self.assertEqual(calculate_progress_checks(14000, 2000, 0.1), 3)
+        self.assertEqual(calculate_progress_checks(1000, 100, 0.05), 1)
+        self.assertEqual(calculate_progress_checks(4000, 500, 0.2), 3)
+        self.assertEqual(calculate_progress_checks(3000, 1000, 0.1), 2)
+        self.assertEqual(calculate_progress_checks(18000, 1000, 0.15), 2)
+        self.assertEqual(calculate_progress_checks(11000, 500, 0.05), 4)
+        self.assertEqual(calculate_progress_checks(14000, 2000, 0.1), 3)
+
+if __name__ == '__main__':
+    unittest.main()

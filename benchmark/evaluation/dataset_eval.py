@@ -243,6 +243,23 @@ class DatasetBenchmarkEvaluator:
         print(f"\nDataset evaluation results saved to:")
         print(f"  - {json_file}")
         print(f"  - {csv_file}")
+        
+        # Save as Excel
+        try:
+            import pandas as pd
+            excel_file = self.results_dir / "dataset_eval_results.xlsx"
+            df = pd.DataFrame([asdict(r) for r in results])
+            # If you still want to exclude 'tests_passed' and 'tests_failed' from df, you could drop them here:
+            if 'tests_passed' in df.columns:
+                df = df.drop(columns=['tests_passed'])
+            if 'tests_failed' in df.columns:
+                df = df.drop(columns=['tests_failed'])
+                
+            df.to_excel(excel_file, index=False)
+            print(f"  - {excel_file}")
+        except ImportError:
+            print("  - Pandas or openpyxl not installed, skipping Excel export")
+            pass
     
     def summarize_results(self, results: List[DatasetEvalResult]) -> Dict:
         """Create summary statistics by model."""
@@ -256,7 +273,6 @@ class DatasetBenchmarkEvaluator:
                     "syntax_valid": 0,
                     "runnable": 0,
                     "total_tests_run": 0,
-                    "total_tests_passed": 0,
                     "total_statement_coverage": 0.0,
                     "total_branch_coverage": 0.0,
                     "total_mutation_score": 0.0,
@@ -269,7 +285,6 @@ class DatasetBenchmarkEvaluator:
             s["syntax_valid"] += 1 if result.syntax_valid else 0
             s["runnable"] += 1 if result.runnable else 0
             s["total_tests_run"] += result.tests_run
-            s["total_tests_passed"] += result.tests_passed
             
             if result.statement_coverage > 0:
                 s["total_statement_coverage"] += result.statement_coverage
@@ -286,8 +301,6 @@ class DatasetBenchmarkEvaluator:
             if n > 0:
                 s["syntax_rate"] = s["syntax_valid"] / n
                 s["runnable_rate"] = s["runnable"] / n
-            if s["total_tests_run"] > 0:
-                s["test_pass_rate"] = s["total_tests_passed"] / s["total_tests_run"]
             if s["coverage_count"] > 0:
                 s["avg_statement_coverage"] = s["total_statement_coverage"] / s["coverage_count"]
                 s["avg_branch_coverage"] = s["total_branch_coverage"] / s["coverage_count"]
@@ -333,7 +346,6 @@ def main():
         print(f"  Subjects: {stats['subjects']}")
         print(f"  Syntax Valid: {stats.get('syntax_rate', 0):.1%}")
         print(f"  Runnable: {stats.get('runnable_rate', 0):.1%}")
-        print(f"  Test Pass Rate: {stats.get('test_pass_rate', 0):.1%}")
         print(f"  Avg Statement Coverage: {stats.get('avg_statement_coverage', 0):.1%}")
         print(f"  Avg Branch Coverage: {stats.get('avg_branch_coverage', 0):.1%}")
         print(f"  Avg Mutation Score: {stats.get('avg_mutation_score', 0):.1%}")

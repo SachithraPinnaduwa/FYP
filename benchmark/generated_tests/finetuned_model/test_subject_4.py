@@ -1,0 +1,12 @@
+def test_make_palindrome_by_insertion():
+    assert make_palindrome_by_insertion("revive") == "reviver"
+    assert make_palindrome_by_insertion("ee") == "eye"
+    assert make_palindrome_by_insertion("kitayuta") == "NA"
+    assert make_palindrome_by_insertion("a") == "aa"
+    assert make_palindrome_by_insertion("abc") == "acb"
+    assert make_palindrome_by_insertion("abcde") == "abcddcba"
+    assert make_palindrome_by_insertion("aaa") == "aaa"
+    assert make_palindrome_by_insertion("z") == "zz"
+    assert make_palindrome_by_insertion("ab") == "aba"
+    assert make_palindrome_by_insertion("abcba") == "abcba"
+    assert make_palindrome_by_insertion("abcde") == "abcddcba"

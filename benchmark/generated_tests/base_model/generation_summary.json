@@ -1,0 +1,5 @@
+{
+    "model": "base_model",
+    "samples": 100,
+    "output_dir": "/home/sachithra/Desktop/FYP/benchmark/generated_tests/base_model"
+}

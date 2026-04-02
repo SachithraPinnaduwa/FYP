@@ -1,0 +1,43 @@
+# Pynguin failed to generate tests.
+# Error or output:
+# [16:29:45] ERROR    Failed to reload SUT: [Errno 12] Cannot allocate memory: '/tmp/tmpslno2brq'                                                                                                 generator.py:460
+#                     ╭─────────────────────────────────────────────────────────────────── Traceback (most recent call last) ───────────────────────────────────────────────────────────────────╮                 
+#                     │ /home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/generator.py:458 in _reload_instrumentation_loader                                      │                 
+#                     │                                                                                                                                                                         │                 
+#                     │    455 │   )                                                                                                                                                            │                 
+#                     │    456 │   try:                                                                                                                                                         │                 
+#                     │    457 │   │   with subject_properties.instrumentation_tracer:                                                                                                          │                 
+#                     │ ❱  458 │   │   │   importlib.reload(module)                                                                                                                             │                 
+#                     │    459 │   except Exception as ex:                                                                                                                                      │                 
+#                     │    460 │   │   _LOGGER.exception("Failed to reload SUT: %s", ex)                                                                                                        │                 
+#                     │    461 │   │   return False                                                                                                                                             │                 
+#                     │                                                                                                                                                                         │                 
+#                     │ /home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/importlib/__init__.py:166 in reload                                                                           │                 
+#                     │                                                                                                                                                                         │                 
+#                     │   163 │   │   else:                                                                                                                                                     │                 
+#                     │   164 │   │   │   pkgpath = None                                                                                                                                        │                 
+#                     │   165 │   │   target = module                                                                                                                                           │                 
+#                     │ ❱ 166 │   │   spec = module.__spec__ = _bootstrap._find_spec(name, pkgpath, target)                                                                                     │                 
+#                     │   167 │   │   if spec is None:                                                                                                                                          │                 
+#                     │   168 │   │   │   raise ModuleNotFoundError(f"spec not found for the module {name!r}",                                                                                  │                 
+#                     │       name=name)                                                                                                                                                        │                 
+#                     │   169 │   │   _bootstrap._exec(spec, module)                                                                                                                            │                 
+#                     │ in _find_spec:945                                                                                                                                                       │                 
+#                     │                                                                                                                                                                         │                 
+#                     │ /home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/instrumentation/machinery.py:191 in find_spec                                           │                 
+#                     │                                                                                                                                                                         │                 
+#                     │   188 │   │   │   An optional ModuleSpec                                                                                                                                │                 
+#                     │   189 │   │   """                                                                                                                                                       │                 
+#                     │   190 │   │   if self._should_instrument(fullname):                                                                                                                     │                 
+#                     │ ❱ 191 │   │   │   spec: ModuleSpec = self._original_pathfinder.find_spec(fullname, path,                                                                                │                 
+#                     │       target)                                                                                                                                                           │                 
+#                     │   192 │   │   │   if spec is not None:                                                                                                                                  │                 
+#                     │   193 │   │   │   │   if isinstance(spec.loader, FileLoader):                                                                                                           │                 
+#                     │   194 │   │   │   │   │   spec.loader = InstrumentationLoader(                                                                                                          │                 
+#                     │ in find_spec:1439                                                                                                                                                       │                 
+#                     │ in _get_spec:1411                                                                                                                                                       │                 
+#                     │ in find_spec:1548                                                                                                                                                       │                 
+#                     │ in _fill_cache:1591                                                                                                                                                     │                 
+#                     ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯                 
+#                     OSError: [Errno 12] Cannot allocate memory: '/tmp/tmpslno2brq'                                                                                                                              
+# 

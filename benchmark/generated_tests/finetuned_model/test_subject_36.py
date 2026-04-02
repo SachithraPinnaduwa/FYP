@@ -1,0 +1,13 @@
+def test_findCommonElements():
+    assert findCommonElements([1, 2, 3, 4, 5], [4, 5, 6, 7, 8]) == [4, 5]
+    assert findCommonElements([10, 20, 30, 40], [15, 20, 25, 30]) == [20, 30]
+    assert findCommonElements(['a', 'b', 'c'], ['b', 'c', 'd', 'e']) == ['b', 'c']
+    assert findCommonElements([], [1, 2, 3]) == []
+    assert findCommonElements([1, 2, 3], []) == []
+    assert findCommonElements([1, 1, 1, 1], [1, 1, 1, 1]) == [1]
+    assert findCommonElements([1, 2, 3, 4], [5, 6, 7, 8]) == []
+    assert findCommonElements(['apple', 'banana'], ['banana', 'cherry', 'apple']) == ['apple', 'banana']
+    assert findCommonElements([100, 200], [300, 200]) == [200]
+    assert findCommonElements(['hello', 'world'], ['hello', 'hello', 'world']) == ['hello', 'world']
+    assert findCommonElements([10, 20, 30], [30, 20, 10]) == [10, 20, 30]
+    assert findCommonElements(['a', 'b', 'c'], ['c', 'b', 'a']) == ['a', 'b', 'c']

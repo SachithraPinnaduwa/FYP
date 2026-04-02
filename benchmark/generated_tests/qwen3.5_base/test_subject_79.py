@@ -1,0 +1,31 @@
+import unittest
+
+class TestReverseString(unittest.TestCase):
+    def test_reverse_string(self):
+        self.assertEqual(reverse_string("hello"), "olleh")
+        self.assertEqual(reverse_string("world"), "dlrow")
+        self.assertEqual(reverse_string(""), "")
+        self.assertEqual(reverse_string("a"), "a")
+        self.assertEqual(reverse_string("12345"), "54321")
+        self.assertEqual(reverse_string("Hello, World!"), "!dlroW ,olleH")
+        self.assertEqual(reverse_string("Python"), "nohtyP")
+        self.assertEqual(reverse_string("123456789"), "987654321")
+        self.assertEqual(reverse_string("aabbccdd"), "ddccbbaa")
+        self.assertEqual(reverse_string("1234567890"), "0987654321")
+        self.assertEqual(reverse_string("Hello World"), "dlroW olleH")
+        self.assertEqual(reverse_string("Python Programming"), "gnimmargorP nohtyP")
+        self.assertEqual(reverse_string("12345678901234567890"), "09876543210987654321")
+        self.assertEqual(reverse_string("Hello World!"), "!dlroW olleH")
+        self.assertEqual(reverse_string("Python Programming!"), "!gnimmargorP nohtyP")
+        self.assertEqual(reverse_string("123456789012345678901234567890"), "098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming!"), "!gnimmargorP nohtyP !dlroW olleH")
+        self.assertEqual(reverse_string("1234567890123456789012345678901234567890"), "0987654321098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming! 123456789012345678901234567890"), "098765432109876543210987654321 !gnimmargorP nohtyP !dlroW olleH")
+        self.assertEqual(reverse_string("12345678901234567890123456789012345678901234567890"), "09876543210987654321098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming! 1234567890123456789012345678901234567890"), "098765432109876543210987654321 !gnimmargorP nohtyP !dlroW olleH")
+        self.assertEqual(reverse_string("123456789012345678901234567890123456789012345678901234567890"), "098765432109876543210987654321098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming! 12345678901234567890123456789012345678901234567890"), "098765432109876543210987654321 !gnimmargorP nohtyP !dlroW olleH")
+        self.assertEqual(reverse_string("1234567890123456789012345678901234567890123456789012345678901234567890"), "0987654321098765432109876543210987654321098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming! 123456789012345678901234567890123456789012345678901234567890"), "098765432109876543210987654321 !gnimmargorP nohtyP !dlroW olleH")
+        self.assertEqual(reverse_string("12345678901234567890123456789012345678901234567890123456789012345678901234567890"), "09876543210987654321098765432109876543210987654321098765432109876543210987654321")
+        self.assertEqual(reverse_string("Hello World! Python Programming! 123456789012

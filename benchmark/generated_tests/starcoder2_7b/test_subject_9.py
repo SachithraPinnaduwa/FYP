@@ -1,0 +1,36 @@
+```python
+import unittest
+
+class TestNthPrime(unittest.TestCase):
+    def test_nth_prime(self):
+        self.assertEqual(nth_prime(1), 2)
+        self.assertEqual(nth_prime(2), 3)
+        self.assertEqual(nth_prime(3), 5)
+        self.assertEqual(nth_prime(4), 7)
+        self.assertEqual(nth_prime(5), 11)
+        self.assertEqual(nth_prime(6), 13)
+        self.assertEqual(nth_prime(7), 17)
+        self.assertEqual(nth_prime(8), 19)
+        self.assertEqual(nth_prime(9), 23)
+        self.assertEqual(nth_prime(10), 29)
+        self.assertEqual(nth_prime(11), 31)
+        self.assertEqual(nth_prime(12), 37)
+        self.assertEqual(nth_prime(13), 41)
+        self.assertEqual(nth_prime(14), 43)
+        self.assertEqual(nth_prime(15), 47)
+        self.assertEqual(nth_prime(16), 53)
+        self.assertEqual(nth_prime(17), 59)
+        self.assertEqual(nth_prime(18), 61)
+        self.assertEqual(nth_prime(19), 67)
+        self.assertEqual(nth_prime(20), 71)
+        self.assertEqual(nth_prime(21), 73)
+        self.assertEqual(nth_prime(22), 79)
+        self.assertEqual(nth_prime(23), 83)
+        self.assertEqual(nth_prime(24), 89)
+        self.assertEqual(nth_prime(25), 97)
+        self.assertEqual(nth_prime(26), 101)
+        self.assertEqual(nth_prime(27), 103)
+        self.assertEqual(nth_prime(28), 107)
+        self.assertEqual(nth_prime(29), 109)
+        self.assertEqual(nth_prime(30), 113)
+        self.assertEqual(nth_prime(31),

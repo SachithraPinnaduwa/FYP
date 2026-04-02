@@ -1,0 +1,16 @@
+def polynomial(x, a, b, c, d, e):
+    """
+    Calculate the result of a polynomial equation of degree 4.
+
+    Parameters:
+    x (float): The value of x in the equation.
+    a (float): The coefficient of x⁴.
+    b (float): The coefficient of x³.
+    c (float): The coefficient of x².
+    d (float): The coefficient of x.
+    e (float): The constant term.
+
+    Returns:
+    float: The result of the polynomial equation.
+    """
+    return a * x**4 + b * x**3 + c * x**2 + d * x + e

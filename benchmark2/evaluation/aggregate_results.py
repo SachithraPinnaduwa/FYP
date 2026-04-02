@@ -23,8 +23,6 @@ class AggregatedMetrics:
     syntax_valid: bool = False
     runnable: bool = False
     tests_run: int = 0
-    tests_passed: int = 0
-    test_pass_rate: float = 0.0
     
     # Coverage metrics
     statement_coverage: float = 0.0
@@ -103,9 +101,6 @@ class ResultAggregator:
                 metrics.syntax_valid = tr.get("syntax_valid", False)
                 metrics.runnable = tr.get("runnable", False)
                 metrics.tests_run = tr.get("tests_run", 0)
-                metrics.tests_passed = tr.get("tests_passed", 0)
-                if metrics.tests_run > 0:
-                    metrics.test_pass_rate = metrics.tests_passed / metrics.tests_run
             
             # Coverage results
             if (model, subject) in coverage_results:
@@ -146,7 +141,6 @@ class ResultAggregator:
                     "syntax_valid": 0,
                     "runnable": 0,
                     "total_tests_run": 0,
-                    "total_tests_passed": 0,
                     "total_statement_coverage": 0.0,
                     "total_branch_coverage": 0.0,
                     "total_mutation_score": 0.0,
@@ -158,7 +152,6 @@ class ResultAggregator:
             s["syntax_valid"] += 1 if m.syntax_valid else 0
             s["runnable"] += 1 if m.runnable else 0
             s["total_tests_run"] += m.tests_run
-            s["total_tests_passed"] += m.tests_passed
             s["total_statement_coverage"] += m.statement_coverage
             s["total_branch_coverage"] += m.branch_coverage
             s["total_mutation_score"] += m.mutation_score
@@ -174,8 +167,6 @@ class ResultAggregator:
                 s["avg_branch_coverage"] = s["total_branch_coverage"] / n
                 s["avg_mutation_score"] = s["total_mutation_score"] / n
                 s["avg_composite_score"] = s["total_composite_score"] / n
-            if s["total_tests_run"] > 0:
-                s["test_pass_rate"] = s["total_tests_passed"] / s["total_tests_run"]
         
         return summary
     
@@ -262,7 +253,7 @@ class ResultAggregator:
             writer = csv.writer(f)
             headers = [
                 "model", "subject", "syntax_valid", "runnable",
-                "tests_run", "tests_passed", "test_pass_rate",
+                "tests_run",
                 "statement_coverage", "branch_coverage",
                 "mutation_score", "mutants_killed", "mutants_total",
                 "composite_score"
@@ -272,7 +263,7 @@ class ResultAggregator:
             for m in metrics:
                 writer.writerow([
                     m.model, m.subject, m.syntax_valid, m.runnable,
-                    m.tests_run, m.tests_passed, f"{m.test_pass_rate:.4f}",
+                    m.tests_run,
                     f"{m.statement_coverage:.4f}", f"{m.branch_coverage:.4f}",
                     f"{m.mutation_score:.4f}", m.mutants_killed, m.mutants_total,
                     f"{m.composite_score:.4f}"
@@ -293,6 +284,18 @@ class ResultAggregator:
         print(f"Results saved to:")
         print(f"  - {json_file}")
         print(f"  - {csv_file}")
+        
+        # Save as Excel
+        try:
+            import pandas as pd
+            excel_file = self.results_dir / "metrics.xlsx"
+            df = pd.DataFrame([asdict(m) for m in metrics])
+            df.to_excel(excel_file, index=False)
+            print(f"  - {excel_file}")
+        except ImportError:
+            print("  - Pandas or openpyxl not installed, skipping Excel export")
+            pass
+
         print(f"  - {summary_file}")
         print(f"  - {report_file}")
         

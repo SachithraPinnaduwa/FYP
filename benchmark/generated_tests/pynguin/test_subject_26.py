@@ -1,0 +1,37 @@
+# Pynguin failed to generate tests.
+# Error or output:
+# [16:33:18] ERROR    Pynguin error in worker process: None is not a callable object                                                                                                                 worker.py:130
+#                     Traceback (most recent call last):                                                                                                                                                          
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/master_worker/worker.py", line 101, in worker_main                                                  
+#                         return_code = run_pynguin()                                                                                                                                                             
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/generator.py", line 144, in run_pynguin                                                             
+#                         return _run()                                                                                                                                                                           
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/generator.py", line 602, in _run                                                                    
+#                         if (setup_result := _setup_and_check()) is None:                                                                                                                                        
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/generator.py", line 331, in _setup_and_check                                                        
+#                         if (test_cluster := _setup_test_cluster()) is None:                                                                                                                                     
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/generator.py", line 151, in _setup_test_cluster                                                     
+#                         test_cluster = generate_test_cluster(                                                                                                                                                   
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/module.py", line 1873, in generate_test_cluster                                            
+#                         return analyse_module(parse_module(module_name), type_inference_strategy)                                                                                                               
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/module.py", line 1851, in analyse_module                                                   
+#                         __resolve_dependencies(                                                                                                                                                                 
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/module.py", line 1668, in __resolve_dependencies                                           
+#                         __analyse_included_classes(                                                                                                                                                             
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/module.py", line 1748, in __analyse_included_classes                                       
+#                         __analyse_class(                                                                                                                                                                        
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/module.py", line 1447, in __analyse_class                                                  
+#                         test_cluster.type_system.infer_type_info(                                                                                                                                               
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/typesystem.py", line 1877, in infer_type_info                                              
+#                         return self.infer_signature(method, type_inference_provider.provide)                                                                                                                    
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/site-packages/pynguin/analyses/typesystem.py", line 1920, in infer_signature                                              
+#                         method_signature = inspect.signature(method_for_signature)                                                                                                                              
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/inspect.py", line 3254, in signature                                                                                      
+#                         return Signature.from_callable(obj, follow_wrapped=follow_wrapped,                                                                                                                      
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/inspect.py", line 3002, in from_callable                                                                                  
+#                         return _signature_from_callable(obj, sigcls=cls,                                                                                                                                        
+#                       File "/home/sachithra/miniconda3/envs/bench2_env/lib/python3.10/inspect.py", line 2396, in _signature_from_callable                                                                       
+#                         raise TypeError('{!r} is not a callable object'.format(obj))                                                                                                                            
+#                     TypeError: None is not a callable object                                                                                                                                                    
+#                                                                                                                                                                                                                 
+# 

@@ -1,0 +1,38 @@
+```python
+import unittest
+
+class TestIsAnagram(unittest.TestCase):
+    def test_is_anagram(self):
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'A'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.assertTrue(is_anagram('a', 'a'))
+        self.

@@ -1,0 +1,34 @@
+```python
+import unittest
+
+class TestDetectEvenOdd(unittest.TestCase):
+    def test_detect_even_odd(self):
+        self.assertEqual(detect_even_odd(1), "Odd")
+        self.assertEqual(detect_even_odd(2), "Even")
+        self.assertEqual(detect_even_odd(3), "Odd")
+        self.assertEqual(detect_even_odd(4), "Even")
+        self.assertEqual(detect_even_odd(5), "Odd")
+        self.assertEqual(detect_even_odd(6), "Even")
+        self.assertEqual(detect_even_odd(7), "Odd")
+        self.assertEqual(detect_even_odd(8), "Even")
+        self.assertEqual(detect_even_odd(9), "Odd")
+        self.assertEqual(detect_even_odd(10), "Even")
+        self.assertEqual(detect_even_odd(11), "Odd")
+        self.assertEqual(detect_even_odd(12), "Even")
+        self.assertEqual(detect_even_odd(13), "Odd")
+        self.assertEqual(detect_even_odd(14), "Even")
+        self.assertEqual(detect_even_odd(15), "Odd")
+        self.assertEqual(detect_even_odd(16), "Even")
+        self.assertEqual(detect_even_odd(17), "Odd")
+        self.assertEqual(detect_even_odd(18), "Even")
+        self.assertEqual(detect_even_odd(19), "Odd")
+        self.assertEqual(detect_even_odd(20), "Even")
+        self.assertEqual(detect_even_odd(21), "Odd")
+        self.assertEqual(detect_even_odd(22), "Even")
+        self.assertEqual(detect_even_odd(23), "Odd")
+        self.assertEqual(detect_even_odd(24), "Even")
+        self.assertEqual(detect_even_odd(25), "Odd")
+        self.assertEqual(detect_even_odd(26), "Even")
+        self.assertEqual(detect_even_odd(27), "Odd")
+        self.assertEqual(detect_even_odd(28), "Even")
+        self.assertEqual(detect_even_odd(29), "
