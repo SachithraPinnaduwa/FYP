@@ -1,0 +1,5 @@
+{
+    "model": "starcoder2_7b",
+    "samples": 100,
+    "output_dir": "/home/sachithra/Desktop/FYP/benchmark/generated_tests/starcoder2_7b"
+}

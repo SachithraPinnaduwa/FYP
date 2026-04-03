@@ -6,9 +6,9 @@ api_simple_prompt,subject_11,False,False,0,0,0,0.0000,0.0000,0.0000,0,0,False
 api_simple_prompt,subject_12,True,True,4,3,1,0.1667,0.0000,1.0000,9,9,False
 api_simple_prompt,subject_13,True,True,1,1,0,0.0476,0.0000,0.0000,0,14,False
 api_simple_prompt,subject_14,True,True,3,3,0,0.2000,0.0000,0.0000,0,2,False
-api_simple_prompt,subject_15,True,True,6,5,1,0.9091,0.6250,1.0000,7,7,False
+api_simple_prompt,subject_15,True,True,6,5,1,0.9394,0.7500,1.0000,7,7,False
 api_simple_prompt,subject_16,True,True,1,1,0,0.0833,0.0000,0.0000,0,2,False
-api_simple_prompt,subject_17,True,True,3,3,0,1.0000,1.0000,0.7333,22,30,False
+api_simple_prompt,subject_17,True,True,3,3,0,1.0000,1.0000,0.7667,23,30,False
 api_simple_prompt,subject_18,True,True,4,1,2,0.2000,0.0000,1.0000,5,5,False
 api_simple_prompt,subject_19,True,True,1,0,1,0.5000,0.0000,1.0000,8,8,False
 api_simple_prompt,subject_2,True,True,5,1,1,0.0435,0.0000,1.0000,23,23,False
@@ -66,7 +66,7 @@ api_simple_prompt,subject_66,True,False,0,0,0,0.0000,0.0000,0.0000,0,0,False
 api_simple_prompt,subject_67,True,True,8,3,5,0.2500,0.0000,1.0000,5,5,False
 api_simple_prompt,subject_68,True,True,6,3,3,0.1667,0.0000,1.0000,1,1,False
 api_simple_prompt,subject_69,True,True,9,8,1,1.0000,1.0000,1.0000,12,16,False
-api_simple_prompt,subject_7,True,True,1,1,0,1.0000,1.0000,0.9200,23,30,False
+api_simple_prompt,subject_7,True,True,1,1,0,1.0000,1.0000,0.9231,24,30,False
 api_simple_prompt,subject_70,True,True,1,1,0,1.0000,1.0000,0.5000,1,2,False
 api_simple_prompt,subject_71,True,True,1,0,1,0.1111,0.0000,1.0000,11,11,False
 api_simple_prompt,subject_72,False,False,0,0,0,0.0000,0.0000,0.0000,0,0,False
@@ -91,7 +91,7 @@ api_simple_prompt,subject_89,True,True,1,0,1,1.0000,0.0000,1.0000,1,1,False
 api_simple_prompt,subject_9,True,True,1,1,0,0.0400,0.0000,0.0000,0,23,False
 api_simple_prompt,subject_90,True,True,1,0,1,0.8824,0.8333,1.0000,7,7,False
 api_simple_prompt,subject_91,True,True,1,1,0,0.0909,0.0000,0.0000,0,7,False
-api_simple_prompt,subject_92,True,True,1,1,0,1.0000,1.0000,0.7931,23,30,False
+api_simple_prompt,subject_92,True,True,1,1,0,1.0000,1.0000,0.8621,25,30,False
 api_simple_prompt,subject_93,True,True,5,4,1,1.0000,1.0000,1.0000,6,6,False
 api_simple_prompt,subject_94,True,True,1,0,1,0.1667,0.0000,1.0000,24,24,False
 api_simple_prompt,subject_95,True,True,1,1,0,0.4479,0.3750,0.4444,4,9,False
@@ -166,7 +166,7 @@ api_adaptive_prompt,subject_66,True,True,5,4,1,0.1111,0.0000,1.0000,11,11,False
 api_adaptive_prompt,subject_67,True,True,5,0,4,0.7500,0.5000,1.0000,5,5,False
 api_adaptive_prompt,subject_68,True,True,5,3,2,1.0000,1.0000,1.0000,1,1,False
 api_adaptive_prompt,subject_69,True,True,9,6,3,0.0588,0.0000,1.0000,16,16,False
-api_adaptive_prompt,subject_7,True,True,1,1,0,1.0000,1.0000,0.8846,23,30,False
+api_adaptive_prompt,subject_7,True,True,1,1,0,1.0000,1.0000,0.8800,22,30,False
 api_adaptive_prompt,subject_70,True,True,5,2,3,1.0000,1.0000,1.0000,2,2,False
 api_adaptive_prompt,subject_71,True,True,4,1,2,0.1111,0.0000,1.0000,11,11,False
 api_adaptive_prompt,subject_72,True,True,7,6,1,0.0345,0.0000,1.0000,30,30,False

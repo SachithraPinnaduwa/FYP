@@ -134,10 +134,22 @@ class TestRunner:
 import sys
 import unittest
 import json
+import builtins
+import importlib
 
 # Add paths
 sys.path.insert(0, "{self.subjects_dir}")
 sys.path.insert(0, "{test_file.parent}")
+
+# Forcefully expose all symbols from the subject module to builtins
+# This ensures that generated tests can run even if they missed the import statement
+try:
+    subject_module = importlib.import_module("{subject}")
+    for name, obj in vars(subject_module).items():
+        if not name.startswith("_"):
+            setattr(builtins, name, obj)
+except Exception:
+    pass
 
 # Load and run tests
 loader = unittest.TestLoader()

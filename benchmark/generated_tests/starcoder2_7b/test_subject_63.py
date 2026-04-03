@@ -1,0 +1,36 @@
+```python
+import unittest
+
+class TestFib(unittest.TestCase):
+  def test_fib(self):
+    self.assertEqual(entrance(0), 0)
+    self.assertEqual(entrance(1), 1)
+    self.assertEqual(entrance(2), 1)
+    self.assertEqual(entrance(3), 2)
+    self.assertEqual(entrance(4), 3)
+    self.assertEqual(entrance(5), 5)
+    self.assertEqual(entrance(6), 8)
+    self.assertEqual(entrance(7), 13)
+    self.assertEqual(entrance(8), 21)
+    self.assertEqual(entrance(9), 34)
+    self.assertEqual(entrance(10), 55)
+    self.assertEqual(entrance(11), 89)
+    self.assertEqual(entrance(12), 144)
+    self.assertEqual(entrance(13), 233)
+    self.assertEqual(entrance(14), 377)
+    self.assertEqual(entrance(15), 610)
+    self.assertEqual(entrance(16), 987)
+    self.assertEqual(entrance(17), 1597)
+    self.assertEqual(entrance(18), 2584)
+    self.assertEqual(entrance(19), 4181)
+    self.assertEqual(entrance(20), 6765)
+    self.assertEqual(entrance(21), 10946)
+    self.assertEqual(entrance(22), 17711)
+    self.assertEqual(entrance(23), 28657)
+    self.assertEqual(entrance(24), 46368)
+    self.assertEqual(entrance(25), 75025)
+    self.assertEqual(entrance(26), 121393)
+    self.assertEqual(entrance(27), 196418)
+    self.assertEqual(entrance(28), 317811)
+    self.assertEqual(entrance(29), 514229)
+    self.assertEqual(entrance(30),
