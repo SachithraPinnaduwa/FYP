@@ -1,3 +1,29 @@
+# UNIT-LLM — Final Hugging Face model
+
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-UNIT--LLM-blue?logo=huggingface)](https://huggingface.co/sachithra1234/UNIT-LLM)
+
+This repository uses the final fine-tuned model: [sachithra1234/UNIT-LLM](https://huggingface.co/sachithra1234/UNIT-LLM).
+
+Quick usage
+
+Python (download & load):
+
+```bash
+pip install huggingface-hub transformers
+python - <<'PY'
+from huggingface_hub import snapshot_download
+snapshot_download("sachithra1234/UNIT-LLM")
+PY
+```
+
+```python
+from transformers import AutoTokenizer, AutoModelForCausalLM
+tokenizer = AutoTokenizer.from_pretrained("sachithra1234/UNIT-LLM")
+model = AutoModelForCausalLM.from_pretrained("sachithra1234/UNIT-LLM")
+```
+
+Note: If the model is not a causal LM, replace `AutoModelForCausalLM` with the correct class.
+
 # FYP Thesis Project: Adaptive Prompting for LLM-Based Python Unit Test Generation
 
 This repository contains the full implementation used for a Final Year Project (FYP) thesis on **automatic unit test generation for Python code**, with an emphasis on **adaptive prompting** and **fine-tuned/open-source LLMs**.
